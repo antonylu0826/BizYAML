@@ -59,6 +59,8 @@ The roadmap strictly follows the rhythm of "foolproof constraints first, core co
 - [x] **Develop `@bizyaml/parser`**: Implement a lightweight, zero-dependency TypeScript compilation module responsible for Discovery, Merge, Desugar, and Semantic Validation, ultimately emitting standardized JSON IR as the sole unified entry point for all downstream tools.
 - [x] **Develop `@bizyaml/cli`**: A thin wrapper over the Parser, providing commands like `bizyaml validate` (including deep semantic checks) and `bizyaml compile` (outputting IR JSON) for integration by developers and CI/CD pipelines.
 - [x] **Publish `@bizyaml/schema`**: Automatically derived JSON schema from the Parser's reserved words definitions, mounted to IDEs for field autocomplete and structural hints.
+- [ ] **Develop `@bizyaml/language-server` (LSP)**: Wrap the Parser into a Language Server Protocol. This background server performs cross-file semantic validations natively without IDE confinement (e.g., asserting workflow states physically exist inside entity enum listings).
+- [ ] **Publish `bizyaml-vscode` Extension**: A lightweight VSCode client extension that automatically boots the aforementioned Language Server, achieving enterprise-grade Developer Experience (DX) offering real-time intelligent diagnostics and inline syntax reinforcements seamlessly.
 
 ### 🔌 Phase 3: Adapters Ecosystem
 *After generating the standard IR, all downstream items are **optional**; implement based on your tech stack. These can be developed by external projects or the open-source community.*
