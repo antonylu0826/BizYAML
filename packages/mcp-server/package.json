@@ -1,7 +1,24 @@
 {
   "name": "@bizyaml/mcp-server",
-  "version": "1.0.0",
+  "version": "1.0.2",
   "description": "Model Context Protocol Server for BizYAML",
+  "keywords": [
+    "bizyaml",
+    "mcp",
+    "model-context-protocol",
+    "yaml",
+    "ai",
+    "claude",
+    "cursor",
+    "llm",
+    "parser"
+  ],
+  "author": "Antony Lu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/antonylu0826/BizYAML.git"
+  },
   "bin": {
     "bizyaml-mcp": "dist/index.mjs"
   },

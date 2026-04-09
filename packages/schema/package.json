@@ -1,7 +1,17 @@
 {
   "name": "@bizyaml/schema",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "JSON Schema definitions for BizYAML",
+  "keywords": ["bizyaml", "json-schema", "vscode", "schema", "validation"],
+  "author": "Antony Lu",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/antonylu0826/BizYAML.git"
+  },
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsx src/generate.ts",
     "clean": "rimraf dist"
