@@ -1,0 +1,20 @@
+{
+  "name": "@bizyaml/mcp-server",
+  "version": "1.0.0",
+  "description": "Model Context Protocol Server for BizYAML",
+  "bin": {
+    "bizyaml-mcp": "dist/index.mjs"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@bizyaml/parser": "*",
+    "@modelcontextprotocol/sdk": "^1.0.1"
+  }
+}

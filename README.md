@@ -43,6 +43,32 @@ Due to the vast scope of business domain logic covered by BizYAML, we have divid
 
 ---
 
+## 🤖 Supercharging AI with MCP Server
+
+If you develop using Claude Desktop, Cursor, or any other MCP-compatible AI IDE, you can connect your AI directly to the local BizYAML Model Context Protocol (MCP) server. 
+This empowers the AI with native understanding of the BizYAML documentation and the ability to strictly self-validate its generated `.entity.yaml` via the underlying Compiler!
+
+**To run the local MCP Inspector for testing:**
+```bash
+npx @modelcontextprotocol/inspector node packages/mcp-server/dist/index.mjs
+```
+
+**To integrate with Claude Desktop:**
+Add the following to your `claude_desktop_config.json` (make sure to replace the path with your actual absolute path):
+```json
+{
+  "mcpServers": {
+    "bizyaml": {
+      "command": "node",
+      "args": ["/ABSOLUTE/PATH/TO/BizYAML/packages/mcp-server/dist/index.mjs"]
+    }
+  }
+}
+```
+After restarting Claude, you can simply prompt: *"Act as a BizYAML Architect and scaffold a basic LeaveRequest entity for me."*
+
+---
+
 ## 🚀 Software Engineering Component Roadmap
 
 **BizYAML is a software engineering core component focused on "Intent Abstraction"**
