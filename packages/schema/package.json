@@ -1,6 +1,6 @@
 {
   "name": "@bizyaml/schema",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "JSON Schema definitions for BizYAML",
   "keywords": ["bizyaml", "json-schema", "vscode", "schema", "validation"],
   "author": "Antony Lu",

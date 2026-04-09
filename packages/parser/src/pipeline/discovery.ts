@@ -38,6 +38,16 @@ function getEntityName(filename: string): string | null {
   return null
 }
 
+import { ZodError, ZodIssue } from 'zod'
+
+function formatZodError(err: ZodError, filePath: string): string {
+  const issues = err.issues.map((i: ZodIssue) => {
+    const path = i.path.length > 0 ? ` [${i.path.join('.')}]` : ''
+    return `${path} ${i.message}`
+  }).join('; ')
+  return `[Schema] ${filePath}: ${issues}`
+}
+
 function getModuleName(rootDir: string, fileDir: string): string {
   const rel = relative(rootDir, fileDir)
   // root-level files have no module folder -> use empty string or a convention
@@ -58,6 +68,7 @@ export function discover(rootDir: string): EntityGroup[] {
       const stat = statSync(fullPath)
 
       if (stat.isDirectory()) {
+        if (entry === 'node_modules' || entry.startsWith('.')) continue
         walk(fullPath)
         continue
       }

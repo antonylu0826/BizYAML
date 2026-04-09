@@ -1,6 +1,6 @@
 # BizYAML
 
-> **Latest Version**: v1.0 Draft
+> **Latest Version**: v1.0.1
 > **Design Philosophy**: Convention over Configuration, dedicated to eliminating redundant rework, creating the perfect intermediate language between domain experts and developers.
 
 Due to the vast scope of business domain logic covered by BizYAML, we have divided this specification into modular, independent sub-documents. Please refer to the index directory below for deeper details:
@@ -43,6 +43,26 @@ Due to the vast scope of business domain logic covered by BizYAML, we have divid
 
 ---
 
+## 🛠️ Developer Experience (DX)
+
+### VS Code Extension
+For the best development experience, install the official **BizYAML** extension. It provides real-time semantic validation, error diagnostics (LSP), and schema-based autocompletion.
+
+- **[VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=AntonyLu.bizyaml-vscode)**: Search for `BizYAML` or `AntonyLu`.
+- **[Open VSX Registry](https://open-vsx.org/extension/antonylu/bizyaml-vscode)**: For VSCodium and other open-source editors.
+
+### Core NPM Packages
+The BizYAML ecosystem is published under the `@bizyaml` scope:
+
+| Package | Purpose | Install Command |
+| :--- | :--- | :--- |
+| `cli` | Command-line validator & compiler | `npm install -g @bizyaml/cli` |
+| `mcp-server` | AI Agent integration (Claude/Cursor) | `npx @bizyaml/mcp-server` |
+| `parser` | Core compilation engine (TS/JS API) | `npm install @bizyaml/parser` |
+| `schema` | JSON Schemas for IDEs | `npm install @bizyaml/schema` |
+
+---
+
 ## 🤖 Supercharging AI with MCP Server
 
 If you develop using Claude Desktop, Cursor, or any other MCP-compatible AI IDE, you can connect your AI directly to the BizYAML Model Context Protocol (MCP) server. 
@@ -67,31 +87,3 @@ After restarting your client, you can just prompt: *"Act as a BizYAML Architect 
 npx @modelcontextprotocol/inspector npx -y @bizyaml/mcp-server@latest
 ```
 
----
-
-## 🚀 Software Engineering Component Roadmap
-
-**BizYAML is a software engineering core component focused on "Intent Abstraction"**
-It primarily aims to provide the most solid specification and parsing foundation, allowing development teams to easily embed it into any existing architecture as the Single Source of Truth (SSOT).
-
-The roadmap strictly follows the rhythm of "foolproof constraints first, core compilation next, open extensible ecosystem last":
-
-### 🏁 Phase 1: Specification & Standard
-- [x] **Complete Specification Definition**: Refine the `docs/*` document series to ensure clear data bounds and distinct reserved words across `.entity`, `.flow`, and `.views`.
-- [x] **Establish AI Collaboration Baseline**: Standardize this specification into System Prompts for AI Coding Agents, ensuring 100% specification consistency whether produced manually or by AI.
-
-### ⚙️ Phase 2: Core Parser & DX
-*The Parser is the Single Source of Truth: All validation logic, JSON Schemas, and CLIs are derived from the Parser to prevent maintaining duplicate rule sets.*
-- [x] **Develop `@bizyaml/parser`**: Implement a lightweight, zero-dependency TypeScript compilation module responsible for Discovery, Merge, Desugar, and Semantic Validation, ultimately emitting standardized JSON IR as the sole unified entry point for all downstream tools.
-- [x] **Develop `@bizyaml/cli`**: A thin wrapper over the Parser, providing commands like `bizyaml validate` (including deep semantic checks) and `bizyaml compile` (outputting IR JSON) for integration by developers and CI/CD pipelines.
-- [x] **Publish `@bizyaml/schema`**: Automatically derived JSON schema from the Parser's reserved words definitions, mounted to IDEs for field autocomplete and structural hints.
-- [ ] **Develop `@bizyaml/language-server` (LSP)**: Wrap the Parser into a Language Server Protocol. This background server performs cross-file semantic validations natively without IDE confinement (e.g., asserting workflow states physically exist inside entity enum listings).
-- [ ] **Publish `bizyaml-vscode` Extension**: A lightweight VSCode client extension that automatically boots the aforementioned Language Server, achieving enterprise-grade Developer Experience (DX) offering real-time intelligent diagnostics and inline syntax reinforcements seamlessly.
-- [x] **Publish `@bizyaml/mcp-server`**: An official Model Context Protocol server. This empowers AI assistants (like Claude or Cursor) with native BizYAML super-capabilities, enabling them to fetch raw documentation, execute the compiler for self-validation during code generation, and flawlessly scaffold entities with zero manual context-injection.
-
-### 🔌 Phase 3: Adapters Ecosystem
-*After generating the standard IR, all downstream items are **optional**; implement based on your tech stack. These can be developed by external projects or the open-source community.*
-- [ ] **ORM Adapters (DB Generators)**: e.g., `bizyaml-prisma-adapter` reads the IR and automatically generates `schema.prisma`.
-- [ ] **Dynamic Form Engine**: Given TypeScript + React as an example, read the IR's `fields`, `views.detail.layout`, `eval` expressions, and `workflow.transitions` to dynamically render full CRUD forms without writing any HTML manually.
-- [ ] **Dynamic UI Renderers**: e.g., `bizyaml-vue-renderer` reads the IR directly and dynamically generates CRUD UI components via data binding.
-- [ ] **I18n Extractor**: Automatically traverses the IR to extract all `label` and `message` strings to generate default translation files.

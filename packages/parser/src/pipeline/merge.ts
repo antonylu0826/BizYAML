@@ -21,8 +21,11 @@ function loadYaml(path: string): Record<string, unknown> {
 }
 
 function formatZodError(err: ZodError, filePath: string): string {
-  const issues = err.issues.map(i => `  - ${i.path.join('.')}: ${i.message}`).join('\n')
-  return `[Merge] Schema validation failed for ${filePath}:\n${issues}`
+  const issues = err.issues.map(i => {
+    const path = i.path.length > 0 ? ` [${i.path.join('.')}]` : ''
+    return `${path} ${i.message}`
+  }).join('; ')
+  return `[Schema] ${filePath}: ${issues}`
 }
 
 function assertNamesMatch(

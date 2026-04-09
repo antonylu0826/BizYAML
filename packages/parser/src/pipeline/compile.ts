@@ -155,17 +155,67 @@ function validateReservedWords(entity: IrEntity): CompileError[] {
   return errors
 }
 
-function semanticValidate(entity: IrEntity): void {
+function validateViews(entity: IrEntity): CompileError[] {
+  const errors: CompileError[] = []
+  const { views, fields, name } = entity
+  if (!views) return errors
+
+  const fieldKeys = new Set(Object.keys(fields))
+
+  if (views.list) {
+    for (const col of views.list.columns) {
+      if (!fieldKeys.has(col)) {
+        errors.push({ entity: name, message: `views.list.columns: field "${col}" does not exist` })
+      }
+    }
+  }
+
+  if (views.detail) {
+    const checkFields = (fields: string[]) => {
+      for (const f of fields) {
+        if (!fieldKeys.has(f)) {
+          errors.push({ entity: name, message: `views.detail: field "${f}" does not exist` })
+        }
+      }
+    }
+
+    for (const section of views.detail.layout) {
+      if (section.type === 'group') {
+        checkFields(section.fields)
+      } else if (section.type === 'tabs') {
+        for (const tab of section.children) {
+          checkFields(tab.fields)
+        }
+      }
+    }
+  }
+
+  return errors
+}
+
+function validateGlobalRelations(entity: IrEntity, allEntityNames: Set<string>): CompileError[] {
+  const errors: CompileError[] = []
+  for (const [key, rel] of Object.entries(entity.relations)) {
+    if (!allEntityNames.has(rel.target)) {
+      errors.push({ entity: entity.name, message: `relations.${key}: Target entity "${rel.target}" does not exist in the workspace` })
+    }
+  }
+  return errors
+}
+
+function semanticValidate(entity: IrEntity, allEntityNames: Set<string>): void {
   const errors = [
     ...validateWorkflow(entity),
     ...validateLookups(entity),
     ...validateExpressions(entity),
     ...validateReservedWords(entity),
+    ...validateViews(entity),
+    ...validateGlobalRelations(entity, allEntityNames),
   ]
 
   if (errors.length > 0) {
-    const msg = errors.map(e => `  [${e.entity}] ${e.message}`).join('\n')
-    throw new Error(`[Compile] Semantic validation failed:\n${msg}`)
+    const msg = errors.map(e => `[Compile] ${e.entity}: ${e.message}`).join('\n')
+    throw new Error(msg)
   }
 }
 
@@ -178,13 +228,19 @@ function semanticValidate(entity: IrEntity): void {
  */
 export function compile(rootDir: string): IrEntity[] {
   const groups = discover(rootDir)
-  const entities: IrEntity[] = []
-
-  for (const group of groups) {
+  
+  // Phase 1: Merge & Desugar everything
+  const entities = groups.map(group => {
     const merged = merge(group)
-    const ir = desugar(merged)
-    semanticValidate(ir)
-    entities.push(ir)
+    return desugar(merged)
+  })
+
+  // Phase 2: Global Registry for cross-referencing
+  const allEntityNames = new Set(entities.map(e => e.name))
+
+  // Phase 3: Semantic Validation
+  for (const ir of entities) {
+    semanticValidate(ir, allEntityNames)
   }
 
   return entities

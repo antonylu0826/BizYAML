@@ -1,8 +1,14 @@
 {
   "name": "@bizyaml/cli",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Command Line Interface for BizYAML",
-  "keywords": ["bizyaml", "cli", "yaml", "parser", "validator"],
+  "keywords": [
+    "bizyaml",
+    "cli",
+    "yaml",
+    "parser",
+    "validator"
+  ],
   "author": "Antony Lu",
   "license": "MIT",
   "repository": {
@@ -24,7 +30,8 @@
   },
   "dependencies": {
     "@bizyaml/parser": "*",
-    "cac": "^6.7.14"
+    "cac": "^6.7.14",
+    "picocolors": "^1.1.1"
   },
   "devDependencies": {
     "vitest": "^1.6.1"

@@ -21,3 +21,6 @@ coverage/
 
 # Compiled IR output
 .bizyaml/
+
+# VSCode Extension package
+*.vsix

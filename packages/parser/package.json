@@ -1,6 +1,6 @@
 {
   "name": "@bizyaml/parser",
-  "version": "1.0.1",
+  "version": "1.0.3",
   "description": "Core AST Parser and Compiler for BizYAML",
   "keywords": ["bizyaml", "parser", "compiler", "yaml", "ast", "zod", "validation"],
   "author": "Antony Lu",

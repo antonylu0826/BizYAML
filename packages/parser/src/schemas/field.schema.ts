@@ -31,10 +31,17 @@ export type EnumOption = z.infer<typeof EnumOptionSchema>
 /** Base type field (string, integer, decimal, boolean, date, datetime, json) */
 const BaseFieldSchema = z.object({
   type:        z.enum(['string', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'json']),
+  label:       z.string().optional(),
   description: z.string().optional(),
   default:     z.unknown().optional(),
   unique:      z.boolean().optional(),
+  required:    EvalValueSchema.optional(),
+  hidden:      EvalValueSchema.optional(),
+  readonly:    EvalValueSchema.optional(),
   eval:        FieldEvalSchema.optional(),
+  // Presentation
+  widget:      z.string().optional(),
+  searchable:  z.boolean().optional(),
   // specific to string
   maxLength: z.number().int().positive().optional(),
   // specific to decimal
@@ -51,19 +58,29 @@ const BaseFieldSchema = z.object({
 /** enum field */
 const EnumFieldSchema = z.object({
   type:        z.literal('enum'),
+  label:       z.string().optional(),
   description: z.string().optional(),
   options:     z.array(EnumOptionSchema).min(1),
   default:     z.union([z.string(), z.number()]).optional(),
   unique:      z.boolean().optional(),
+  required:    EvalValueSchema.optional(),
+  hidden:      EvalValueSchema.optional(),
+  readonly:    EvalValueSchema.optional(),
   eval:        FieldEvalSchema.optional(),
+  // Presentation
+  widget:      z.string().optional(),
+  searchable:  z.boolean().optional(),
 })
 
 /** lookup virtual table field */
 const LookupFieldSchema = z.object({
   type:        z.literal('lookup'),
+  label:       z.string().optional(),
   description: z.string().optional(),
   relation:    z.string().min(1),
   field:       z.string().min(1),
+  // Presentation
+  widget:      z.string().optional(),
 })
 
 /** Field complete object format (union of three types) */

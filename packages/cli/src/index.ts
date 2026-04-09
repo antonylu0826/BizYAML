@@ -2,6 +2,7 @@ import { cac } from 'cac'
 import { resolve, join } from 'path'
 import { writeFileSync, mkdirSync } from 'fs'
 import { compile } from '@bizyaml/parser'
+import pc from 'picocolors'
 
 const cli = cac('bizyaml')
 
@@ -13,13 +14,13 @@ cli
     const rootDir = resolve(dir)
     const outDir = options.out ? resolve(options.out) : join(rootDir, '.bizyaml')
 
-    console.log(`Compiling: ${rootDir}`)
+    console.log(pc.cyan(`Compiling: ${rootDir}`))
 
     let entities
     try {
       entities = compile(rootDir)
     } catch (err) {
-      console.error((err as Error).message)
+      console.error(pc.red((err as Error).message))
       process.exit(1)
     }
 
@@ -34,27 +35,31 @@ cli
         ? JSON.stringify(entity, null, 2)
         : JSON.stringify(entity)
       writeFileSync(outPath, json, 'utf-8')
-      console.log(`  ✓ ${filename}`)
+      console.log(`  ${pc.green('✓')} ${pc.dim(filename)}`)
     }
 
-    console.log(`\n${entities.length} entity/entities compiled → ${outDir}`)
+    console.log(`\n${pc.bold(entities.length)} entity/entities compiled → ${pc.dim(outDir)}`)
   })
 
 cli
   .command('validate <dir>', 'Validate BizYAML files without emitting output')
   .action((dir: string) => {
     const rootDir = resolve(dir)
-    console.log(`Validating: ${rootDir}`)
+    console.log(pc.cyan(`Validating: ${rootDir}`))
 
     try {
       const entities = compile(rootDir)
-      console.log(`✓ ${entities.length} entity/entities valid`)
+      console.log(`${pc.green('✓')} ${pc.bold(entities.length)} entity/entities valid`)
     } catch (err) {
-      console.error((err as Error).message)
+      // Split multi-line errors (from compile) and print them cleanly
+      const lines = (err as Error).message.split('\n')
+      for (const line of lines) {
+        console.error(`${pc.red('✗')} ${line}`)
+      }
       process.exit(1)
     }
   })
 
 cli.help()
-cli.version('1.0.0')
+cli.version('1.0.1')
 cli.parse()
