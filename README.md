@@ -54,18 +54,14 @@
 - [x] **完成規格定義**：完善 `docs/*` 系列文件，確保 `.entity`, `.flow`, `.views` 的資料結構邊界與保留字不再模糊。
 - [x] **建立 AI 協作基準**：將本規範書標準化為 AI Coding Agent 的 System Prompt，確保人工或 AI 產出都具備 100% 的規格一致性。
 
-### 🛠 Phase 2: 開發體驗與靜態檢查 (DX & Static Analysis)
-*此階段旨在確保「手寫或 AI 生成的 BizYAML 絕對合法不出錯」。*
-- [ ] **發布 `@bizyaml/schema`**：釋出官方 JSON Schema 檔，掛載至 IDE 後提供欄位自動補齊與防呆報錯。
-- [ ] **開發 `@bizyaml/cli`**：提供指令工具（如 `npx bizyaml validate .`），供開發人員與 CI/CD 攔截非法的的 YAML 結構。
+### ⚙️ Phase 2: 核心解析引擎與開發工具 (Core Parser & DX)
+*Parser 是唯一的真實來源：所有驗證邏輯、JSON Schema、CLI 全部從 Parser 派生，不重複維護兩套規則。*
+- [ ] **開發 `@bizyaml/parser`**：實作輕量且零依賴的 TypeScript 編譯模組，負責 Discovery、Merge、Desugar、語義驗證，最終吐出標準化 JSON IR，作為所有下游工具的唯一標準入口。
+- [ ] **開發 `@bizyaml/cli`**：Parser 的 thin wrapper，提供 `bizyaml validate`（含語義層深度檢查）、`bizyaml compile`（輸出 IR JSON）等指令，供開發人員與 CI/CD 流程整合。
+- [ ] **發布 `@bizyaml/schema`**：由 Parser 的保留字定義自動衍生的 JSON Schema，掛載至 IDE 後提供欄位自動補齊與結構防呆提示。
 
-### ⚙️ Phase 3: 核心解析引擎 (Core AST Parser)
-*這將是 BizYAML 本體專案的技術核心產出。*
-- [ ] **開發 `@bizyaml/parser`**：實作輕量且零依賴的 Node.js 編譯模組（TypeScript）。
-- [ ] **AST 中繼表達式生成**：負責「去糖處理 (Desugaring)」與「合併視圖」，最終吐出極度乾淨、標準化的 JSON IR/AST，作為所有外部框架對接唯一的標準入口。
-
-### 🔌 Phase 4: 適配器開放生態 (Adapters Ecosystem)
-*產出標準 AST 後，由外部專案或開源社群自行開發適合自己的轉換器：*
-- [ ] **ORM 適配器 (DB Generators)**：例如 `bizyaml-prisma-adapter` 讀取 AST 後自動吐出 `schema.prisma`。
-- [ ] **動態表單渲染 (UI Renderers)**：例如 `bizyaml-vue-table` 直接讀取 AST，利用資料綁定動態生出 CRUD 元件。
-- [ ] **多語系提取器 (I18n Extractor)**：自動遍歷 AST 抽出 `label` 等屬性，生成預設翻譯檔。
+### 🔌 Phase 3: 適配器開放生態 (Adapters Ecosystem)
+*產出標準 IR 後，由外部專案或開源社群自行開發適合自己的轉換器：*
+- [ ] **ORM 適配器 (DB Generators)**：例如 `bizyaml-prisma-adapter` 讀取 IR 後自動吐出 `schema.prisma`。
+- [ ] **動態表單渲染 (UI Renderers)**：例如 `bizyaml-vue-renderer` 直接讀取 IR，利用資料綁定動態生出 CRUD 元件。
+- [ ] **多語系提取器 (I18n Extractor)**：自動遍歷 IR 抽出所有 `label` 與 `message`，生成預設翻譯檔。
