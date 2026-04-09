@@ -16,6 +16,7 @@
 | :--- | :--- | :---: | :--- | :--- |
 | `name` | String | ✅ | 宣告實體的全域唯一識別碼 | 必須為大駝峰 (如: `PurchaseOrder`) |
 | `label` | String | - | 實體的預設人類可讀名稱 | 如: "採購單" |
+| `description` | String | - | 實體的業務說明，給人與 AI Agent 閱讀；不進 UI 渲染，不被 i18n 提取 | 純文字，不支援 Markdown |
 | `fields` | Object | ✅ | 包含所有實體資料屬性的宣告進入點 | 關聯一律宣告於 `relations`，不在此處 |
 | `relations` | Object | - | 關聯與樹狀結構的獨立宣告進入點 | 解析器自動生成對應外鍵欄位 |
 | `indexes` | Array | - | 資料庫實體端之複合索引進入點 | - |
@@ -35,6 +36,7 @@
 | 保留字 | 類型 | 用途說明 | 範例 |
 | :--- | :--- | :--- | :--- |
 | `type` | String | 決定對應的資料庫儲存型別 | `string`, `integer`, `decimal`, `boolean`, `date`, `datetime`, `json`, `enum`, `lookup` |
+| `description` | String | 欄位的業務說明，給人與 AI Agent 閱讀；適用所有型別，不進 i18n 提取 | 純文字，選填 |
 | `computed` | Expr | 定義不存入資料庫的純記憶體計算公式 | `computed: "grossAmount - discountAmount"` |
 | `sequence` | String | 流水單號字串板模，系統自動推算歸零維度 | `"PO-{YYYY}{MM}-{SEQ:4}"` |
 | `options` | Array | 專供 `enum` 型別使用的合法列舉值清單 | 簡寫：`[Draft, Pending]`；完整：`[{value: 1, label: 低}]` |
@@ -72,6 +74,7 @@
 | :--- | :--- | :--- | :--- |
 | `action` | String | 觸發按鈕或動作的名稱 | 如: `Submit`, `Reject` |
 | `label` | String | 動作的人類可讀名稱，由 i18n 提取 | 如: `送出審核` |
+| `description` | String | 動作的業務說明，給人與 AI Agent 閱讀；不進 i18n 提取 | 純文字，選填 |
 | `from` | Array | 允許發起此動作的前置狀態限制 | 如: `[Draft, Rejected]` |
 | `to` | String | 動作執行成功後的落點狀態 | 如: `Pending` |
 | `guard` | Object | **守衛條件容器**：執行動作前才查核的前置邏輯。與欄位層的 `eval` 語義不同，不可混用 | - |

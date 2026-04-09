@@ -30,10 +30,11 @@ export type EnumOption = z.infer<typeof EnumOptionSchema>
 
 /** 基礎型別欄位（string, integer, decimal, boolean, date, datetime, json） */
 const BaseFieldSchema = z.object({
-  type: z.enum(['string', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'json']),
-  default: z.unknown().optional(),
-  unique:  z.boolean().optional(),
-  eval:    FieldEvalSchema.optional(),
+  type:        z.enum(['string', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'json']),
+  description: z.string().optional(),
+  default:     z.unknown().optional(),
+  unique:      z.boolean().optional(),
+  eval:        FieldEvalSchema.optional(),
   // string 專用
   maxLength: z.number().int().positive().optional(),
   // decimal 專用
@@ -49,18 +50,20 @@ const BaseFieldSchema = z.object({
 
 /** enum 欄位 */
 const EnumFieldSchema = z.object({
-  type:    z.literal('enum'),
-  options: z.array(EnumOptionSchema).min(1),
-  default: z.union([z.string(), z.number()]).optional(),
-  unique:  z.boolean().optional(),
-  eval:    FieldEvalSchema.optional(),
+  type:        z.literal('enum'),
+  description: z.string().optional(),
+  options:     z.array(EnumOptionSchema).min(1),
+  default:     z.union([z.string(), z.number()]).optional(),
+  unique:      z.boolean().optional(),
+  eval:        FieldEvalSchema.optional(),
 })
 
 /** lookup 虛擬查表欄位 */
 const LookupFieldSchema = z.object({
-  type:     z.literal('lookup'),
-  relation: z.string().min(1),
-  field:    z.string().min(1),
+  type:        z.literal('lookup'),
+  description: z.string().optional(),
+  relation:    z.string().min(1),
+  field:       z.string().min(1),
 })
 
 /** 欄位完整物件形式（三種型別的聯集） */

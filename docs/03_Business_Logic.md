@@ -62,6 +62,7 @@ workflow:
   transitions:
     - action: Submit
       label: 送出審核
+      description: "草稿或退回狀態下，填寫人確認資料無誤後送出，進入待審核佇列。"
       from: [Draft, Rejected]
       to: Pending
       guard:                            # 動作觸發前的守衛條件查核

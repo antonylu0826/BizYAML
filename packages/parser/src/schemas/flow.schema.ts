@@ -26,11 +26,12 @@ export type Guard = z.infer<typeof GuardSchema>
 
 /** 單一狀態轉換規則 */
 export const TransitionSchema = z.object({
-  action: z.string().min(1),
-  label:  z.string().optional(),
-  from:   z.array(z.string().min(1)).min(1),
-  to:     z.string().min(1),
-  guard:  GuardSchema.optional(),
+  action:      z.string().min(1),
+  label:       z.string().optional(),
+  description: z.string().optional(),
+  from:        z.array(z.string().min(1)).min(1),
+  to:          z.string().min(1),
+  guard:       GuardSchema.optional(),
 })
 export type Transition = z.infer<typeof TransitionSchema>
 

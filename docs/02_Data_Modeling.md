@@ -9,9 +9,11 @@
 ```yaml
 name: PurchaseOrder      # 實體英文代碼，大駝峰。結合當前資料夾名稱構成全域唯一識別碼。
 label: 採購單             # 預設顯示名稱 (可作為 I18n 前的 Fallback)
+description: "記錄公司向供應商採購物料的單據，需經過三階段審核流程。"  # 選填，業務說明
 ```
 
 > **注意：** `module`（模組名稱）不該在文件中被寫死，應交由目錄結構自動推斷。
+> **`description` 設計原則**：純文字字串，給人和 AI Agent 閱讀的業務說明。不進 UI 渲染、不被 i18n 提取、不強制填寫。簡單的字典實體可省略。
 
 ---
 
@@ -21,6 +23,8 @@ label: 採購單             # 預設顯示名稱 (可作為 I18n 前的 Fallbac
 
 ### 2.1 基礎型別
 底層支援通用的資料型別對映：`string`, `integer`, `decimal`, `boolean`, `date`, `datetime`, `json` 等。
+
+欄位可加入 `description` 說明業務含義，對 AI Agent 協作特別有幫助：
 
 ```yaml
 fields:
@@ -98,7 +102,21 @@ fields:
 
 > 表達式語法請參閱 [06. 表達式語言規範](./06_Expression_Language.md)。
 
-### 2.5 欄位動態條件控制 (`eval`)
+### 2.5 欄位說明 (`description`)
+
+```yaml
+fields:
+  rejectReason:
+    type: string
+    description: "退回原因，由審核人員填寫，作為後續改善依據。"
+    eval:
+      required: "status == 'Rejected'"
+      hidden: "status != 'Rejected'"
+```
+
+`description` 為純文字選填屬性，適用於所有欄位型別（包含 `enum`、`lookup`、`computed`）。不支援 Markdown，不進 i18n 提取，不影響任何驗證邏輯。
+
+### 2.6 欄位動態條件控制 (`eval`)
 
 `eval` 是所有欄位控制項的**統一容器**，接受兩種值形式：
 
@@ -123,7 +141,7 @@ fields:
       readonly: "isLocked == true"       # 動態：鎖定時唯讀
 ```
 
-### 2.6 虛擬查表映射 (Lookup / Virtual Fields)
+### 2.7 虛擬查表映射 (Lookup / Virtual Fields)
 當需要在畫面上呈現來自關聯實體的某項屬性時（如：選了供應商要顯示電話），為確保 Database 遵守第三正規化，可使用 `lookup` 類型，不重複轉存資料：
 
 ```yaml

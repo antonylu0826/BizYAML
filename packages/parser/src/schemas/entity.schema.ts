@@ -9,11 +9,12 @@ import { ViewsSchema } from './views.schema.js'
 // ---------------------------------------------------------------------------
 
 export const EntityFileSchema = z.object({
-  name:      EntityNameSchema,
-  label:     z.string().optional(),
-  fields:    FieldsSchema,
-  relations: RelationsSchema.optional(),
-  indexes:   IndexesSchema.optional(),
+  name:        EntityNameSchema,
+  label:       z.string().optional(),
+  description: z.string().optional(),
+  fields:      FieldsSchema,
+  relations:   RelationsSchema.optional(),
+  indexes:     IndexesSchema.optional(),
 })
 export type EntityFile = z.infer<typeof EntityFileSchema>
 
@@ -38,6 +39,7 @@ export type { ViewsFile } from './views.schema.js'
 export const SingleFileSchema = z.object({
   name:        EntityNameSchema,
   label:       z.string().optional(),
+  description: z.string().optional(),
   // entity 層
   fields:      FieldsSchema,
   relations:   RelationsSchema.optional(),

@@ -67,19 +67,21 @@ function desugarSequence(raw: string): IrSequence {
 // ---------------------------------------------------------------------------
 
 function desugarField(key: string, raw: unknown): IrField {
-  // Shorthand string form
+  // Shorthand string form — no description possible in shorthand
   if (typeof raw === 'string') {
     const { type, maxLength, precision, scale, array, required } = parseShorthand(raw)
     const field: IrBaseField = {
-      type, virtual: false, array,
-      maxLength: maxLength ?? null,
-      precision: precision ?? null,
-      scale: scale ?? null,
-      default: null,
-      unique: false,
-      sequence: null,
-      computed: null,
-      eval: { ...DEFAULT_EVAL, required },
+      type,        description: null,
+      virtual:     false,
+      array,
+      maxLength:   maxLength ?? null,
+      precision:   precision ?? null,
+      scale:       scale ?? null,
+      default:     null,
+      unique:      false,
+      sequence:    null,
+      computed:    null,
+      eval:        { ...DEFAULT_EVAL, required },
     }
     return field
   }
@@ -89,10 +91,11 @@ function desugarField(key: string, raw: unknown): IrField {
   // lookup
   if (obj.type === 'lookup') {
     const field: IrLookupField = {
-      type: 'lookup',
-      virtual: true,
-      relation: obj.relation as string,
-      field: obj.field as string,
+      type:        'lookup',
+      description: (obj.description as string | null) ?? null,
+      virtual:     true,
+      relation:    obj.relation as string,
+      field:       obj.field as string,
     }
     return field
   }
@@ -104,33 +107,31 @@ function desugarField(key: string, raw: unknown): IrField {
       typeof o === 'string' ? { value: o, label: o } : o
     )
     const field: IrEnumField = {
-      type: 'enum',
-      virtual: false,
+      type:        'enum',
+      description: (obj.description as string | null) ?? null,
+      virtual:     false,
       options,
       default: (obj.default as string | number | null) ?? null,
-      unique: (obj.unique as boolean) ?? false,
-      eval: parseEval(obj.eval as Record<string, unknown> | undefined),
+      unique:  (obj.unique as boolean) ?? false,
+      eval:    parseEval(obj.eval as Record<string, unknown> | undefined),
     }
     return field
   }
 
   // base types
-  const evalRaw = obj.eval as Record<string, unknown> | undefined
-  const evalObj = parseEval(evalRaw)
-
-  // ! shorthand on type string is already handled; here handle explicit required
   const field: IrBaseField = {
-    type: obj.type as IrBaseField['type'],
-    virtual: false,
-    array: (obj.array as boolean) ?? false,
-    maxLength: (obj.maxLength as number | null) ?? null,
-    precision: (obj.precision as number | null) ?? null,
-    scale: (obj.scale as number | null) ?? null,
-    default: obj.default ?? null,
-    unique: (obj.unique as boolean) ?? false,
-    sequence: obj.sequence ? desugarSequence(obj.sequence as string) : null,
-    computed: (obj.computed as string | null) ?? null,
-    eval: evalObj,
+    type:        obj.type as IrBaseField['type'],
+    description: (obj.description as string | null) ?? null,
+    virtual:     false,
+    array:       (obj.array as boolean) ?? false,
+    maxLength:   (obj.maxLength as number | null) ?? null,
+    precision:   (obj.precision as number | null) ?? null,
+    scale:       (obj.scale as number | null) ?? null,
+    default:     obj.default ?? null,
+    unique:      (obj.unique as boolean) ?? false,
+    sequence:    obj.sequence ? desugarSequence(obj.sequence as string) : null,
+    computed:    (obj.computed as string | null) ?? null,
+    eval:        parseEval(obj.eval as Record<string, unknown> | undefined),
   }
   return field
 }
@@ -185,11 +186,12 @@ function desugarGuard(raw: Record<string, unknown> | undefined | null): IrGuard 
 
 function desugarTransitions(raw: Array<Record<string, unknown>>): IrTransition[] {
   return raw.map(t => ({
-    action: t.action as string,
-    label:  (t.label as string | null) ?? null,
-    from:   t.from as string[],
-    to:     t.to as string,
-    guard:  desugarGuard(t.guard as Record<string, unknown> | undefined | null),
+    action:      t.action as string,
+    label:       (t.label as string | null) ?? null,
+    description: (t.description as string | null) ?? null,
+    from:        t.from as string[],
+    to:          t.to as string,
+    guard:       desugarGuard(t.guard as Record<string, unknown> | undefined | null),
   }))
 }
 
@@ -307,6 +309,7 @@ export function desugar(merged: RawMerged): IrEntity {
     module,
     name:        entityName,
     label:       (raw.label as string | null) ?? null,
+    description: (raw.description as string | null) ?? null,
     fields,
     relations,
     indexes,

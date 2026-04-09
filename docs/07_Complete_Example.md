@@ -22,6 +22,7 @@
 ```yaml
 name: PurchaseOrder
 label: 採購單
+description: "記錄公司向供應商採購物料的單據，需經過送審、核准兩階段流程，退回時須附理由。"
 
 fields:
   # 流水單號：系統自動生成，唯讀
@@ -59,6 +60,7 @@ fields:
   # 退回理由：僅在退回狀態下顯示且必填
   rejectReason:
     type: string
+    description: "退回原因，由審核人員填寫，作為填寫人後續改善的依據。"
     eval:
       required: "status == 'Rejected'"
       hidden: "status != 'Rejected'"
