@@ -1,0 +1,13 @@
+{
+  "name": "@bizyaml/schema",
+  "version": "1.0.0",
+  "description": "JSON Schema definitions for BizYAML",
+  "scripts": {
+    "build": "tsx src/generate.ts",
+    "clean": "rimraf dist"
+  },
+  "dependencies": {
+    "@bizyaml/parser": "*",
+    "zod-to-json-schema": "^3.25.2"
+  }
+}

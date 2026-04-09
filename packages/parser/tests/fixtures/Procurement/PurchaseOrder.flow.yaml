@@ -1,0 +1,51 @@
+name: PurchaseOrder
+
+validations:
+  - rule: "totalAmount > 0"
+    message: "採購金額必須大於零"
+  - rule: "discountAmount <= totalAmount * 0.5"
+    message: "折扣金額不可超過總額的 50%"
+
+workflow:
+  statusField: status
+  initial: Draft
+  terminal: [Approved, Cancelled]
+  transitions:
+    - action: Submit
+      label: 送出審核
+      from: [Draft, Rejected]
+      to: Pending
+      guard:
+        validations:
+          - rule: "count(items) > 0"
+            message: "必須至少有一筆明細"
+    - action: Approve
+      label: 核准
+      from: [Pending]
+      to: Approved
+    - action: Reject
+      label: 退回
+      from: [Pending]
+      to: Rejected
+      guard:
+        requireParams: [rejectReason]
+    - action: Cancel
+      label: 作廢
+      from: [Draft]
+      to: Cancelled
+
+hooks:
+  - event: "after:transition:Approve"
+    type: webhook
+    url: "https://example.com/webhook/po-approved"
+    async: true
+    payload:
+      poId: "${id}"
+      amount: "${totalAmount}"
+  - event: "after:transition:*"
+    type: webhook
+    url: "https://example.com/webhook/audit"
+    async: true
+    payload:
+      recordId: "${id}"
+      status: "${status}"

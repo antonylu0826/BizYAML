@@ -1,0 +1,22 @@
+{
+  "name": "bizyaml-monorepo",
+  "private": true,
+  "version": "1.0.0",
+  "description": "BizYAML Core Ecosystem Monorepo",
+  "workspaces": [
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "npm run build --workspaces --if-present",
+    "dev": "npm run dev --workspaces --if-present",
+    "clean": "npm run clean --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present"
+  },
+  "devDependencies": {
+    "typescript": "^5.4.5",
+    "tsup": "^8.0.2",
+    "@types/node": "^20.12.7",
+    "tsx": "^4.7.2",
+    "rimraf": "^5.0.5"
+  }
+}

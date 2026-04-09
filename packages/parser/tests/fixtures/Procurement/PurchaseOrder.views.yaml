@@ -1,0 +1,23 @@
+name: PurchaseOrder
+
+views:
+  list:
+    columns: [poNumber, supplier, totalAmount, status]
+    defaultSort: "-createdAt"
+    filterBy: [status, supplier]
+  detail:
+    actions:
+      placement: top
+    layout:
+      - type: group
+        label: 基本資料
+        fields: [poNumber, supplier, supplierPhone, status]
+      - type: group
+        label: 金額資訊
+        fields: [totalAmount, discountAmount, netAmount]
+      - type: tabs
+        children:
+          - label: 採購明細
+            fields: [items]
+          - label: 其他資訊
+            fields: [notes, rejectReason]

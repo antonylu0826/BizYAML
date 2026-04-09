@@ -1,0 +1,51 @@
+name: PurchaseOrder
+label: 採購單
+
+fields:
+  poNumber:
+    type: string
+    sequence: "PO-{YYYY}{MM}-{SEQ:4}"
+    eval:
+      readonly: true
+  status:
+    type: enum
+    options:
+      - value: Draft
+        label: 草稿
+      - value: Pending
+        label: 待審核
+      - value: Approved
+        label: 已核准
+      - value: Rejected
+        label: 已退回
+      - value: Cancelled
+        label: 作廢
+    default: Draft
+  totalAmount:
+    type: decimal
+    unique: false
+    eval:
+      required: true
+  discountAmount:
+    type: decimal
+    default: 0
+  netAmount:
+    type: decimal
+    computed: "totalAmount - discountAmount"
+  rejectReason:
+    type: string
+    eval:
+      required: "status == 'Rejected'"
+      hidden: "status != 'Rejected'"
+  notes: string
+  supplierPhone:
+    type: lookup
+    relation: supplier
+    field: phoneNumber
+
+relations:
+  supplier: Supplier
+  items: [PurchaseOrderItem]
+
+indexes:
+  - fields: [status, createdAt]
