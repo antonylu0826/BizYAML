@@ -61,6 +61,7 @@ The roadmap strictly follows the rhythm of "foolproof constraints first, core co
 - [x] **Publish `@bizyaml/schema`**: Automatically derived JSON schema from the Parser's reserved words definitions, mounted to IDEs for field autocomplete and structural hints.
 - [ ] **Develop `@bizyaml/language-server` (LSP)**: Wrap the Parser into a Language Server Protocol. This background server performs cross-file semantic validations natively without IDE confinement (e.g., asserting workflow states physically exist inside entity enum listings).
 - [ ] **Publish `bizyaml-vscode` Extension**: A lightweight VSCode client extension that automatically boots the aforementioned Language Server, achieving enterprise-grade Developer Experience (DX) offering real-time intelligent diagnostics and inline syntax reinforcements seamlessly.
+- [ ] **Publish `@bizyaml/mcp-server`**: An official Model Context Protocol server. This empowers AI assistants (like Claude or Cursor) with native BizYAML super-capabilities, enabling them to fetch raw documentation, execute the compiler for self-validation during code generation, and flawlessly scaffold entities with zero manual context-injection.
 
 ### 🔌 Phase 3: Adapters Ecosystem
 *After generating the standard IR, all downstream items are **optional**; implement based on your tech stack. These can be developed by external projects or the open-source community.*
