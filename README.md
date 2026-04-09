@@ -56,9 +56,9 @@
 
 ### ⚙️ Phase 2: 核心解析引擎與開發工具 (Core Parser & DX)
 *Parser 是唯一的真實來源：所有驗證邏輯、JSON Schema、CLI 全部從 Parser 派生，不重複維護兩套規則。*
-- [ ] **開發 `@bizyaml/parser`**：實作輕量且零依賴的 TypeScript 編譯模組，負責 Discovery、Merge、Desugar、語義驗證，最終吐出標準化 JSON IR，作為所有下游工具的唯一標準入口。
-- [ ] **開發 `@bizyaml/cli`**：Parser 的 thin wrapper，提供 `bizyaml validate`（含語義層深度檢查）、`bizyaml compile`（輸出 IR JSON）等指令，供開發人員與 CI/CD 流程整合。
-- [ ] **發布 `@bizyaml/schema`**：由 Parser 的保留字定義自動衍生的 JSON Schema，掛載至 IDE 後提供欄位自動補齊與結構防呆提示。
+- [x] **開發 `@bizyaml/parser`**：實作輕量且零依賴的 TypeScript 編譯模組，負責 Discovery、Merge、Desugar、語義驗證，最終吐出標準化 JSON IR，作為所有下游工具的唯一標準入口。
+- [x] **開發 `@bizyaml/cli`**：Parser 的 thin wrapper，提供 `bizyaml validate`（含語義層深度檢查）、`bizyaml compile`（輸出 IR JSON）等指令，供開發人員與 CI/CD 流程整合。
+- [x] **發布 `@bizyaml/schema`**：由 Parser 的保留字定義自動衍生的 JSON Schema，掛載至 IDE 後提供欄位自動補齊與結構防呆提示。
 
 ### 🔌 Phase 3: 適配器開放生態 (Adapters Ecosystem)
 *產出標準 IR 後，由外部專案或開源社群自行開發適合自己的轉換器：*
