@@ -1,50 +1,50 @@
-# 02. 資料模型層 (Data Modeling)
+# 02. Data Modeling Layer
 
-資料模型層定義了系統深層的關連資料庫 Schema。在 BizYAML 的約定設計中，這部分應當宣告於 `[Entity].entity.yaml` 內。
+The Data Modeling layer defines the underlying relational database schema of the system. Under BizYAML's conventions, this part should be declared within `[Entity].entity.yaml`.
 
-## 1. 根屬性定義 (Root Properties)
+## 1. Root Properties
 
-任何 BizYAML 文件的核心，皆由最精簡的名稱標籤起手：
+The core of any BizYAML document begins with the most concise naming tags:
 
 ```yaml
-name: PurchaseOrder      # 實體英文代碼，大駝峰。結合當前資料夾名稱構成全域唯一識別碼。
-label: 採購單             # 預設顯示名稱 (可作為 I18n 前的 Fallback)
-description: "記錄公司向供應商採購物料的單據，需經過三階段審核流程。"  # 選填，業務說明
+name: PurchaseOrder      # English code for the entity, PascalCase. Combined with the current folder name to form a globally unique identifier.
+label: Purchase Order    # Default display name (serves as a fallback before I18n translation)
+description: "Records material purchase documents from suppliers, requiring a three-stage review workflow."  # Optional, business context note
 ```
 
-> **注意：** `module`（模組名稱）不該在文件中被寫死，應交由目錄結構自動推斷。
-> **`description` 設計原則**：純文字字串，給人和 AI Agent 閱讀的業務說明。不進 UI 渲染、不被 i18n 提取、不強制填寫。簡單的字典實體可省略。
+> **Note:** `module` (Module Name) should not be hardcoded inside the document; it is auto-inferred from the directory structure.
+> **`description` Design Principle**: Plain text intended for human and AI Agent consumption. It does not appear in UI rendering, is not extracted by i18n, and is optional. Simple dictionary tables can omit it entirely.
 
 ---
 
-## 2. 欄位系統 (Fields System)
+## 2. Fields System
 
-> **可選預設**：所有欄位預設為**可選 (nullable)**，除非加上 `!` 後綴或在 `eval` 中宣告 `required: true`。
+> **Optional Default**: All fields default to **nullable** unless appended with a `!` suffix or explicitly set to `required: true` inside an `eval` block.
 
-### 2.1 基礎型別
-底層支援通用的資料型別對映：`string`, `integer`, `decimal`, `boolean`, `date`, `datetime`, `json` 等。
+### 2.1 Base Types
+Supported data types: `string`, `integer`, `decimal`, `boolean`, `date`, `datetime`, `json`.
 
-欄位可加入 `description` 說明業務含義，對 AI Agent 協作特別有幫助：
+Fields can carry a `description` to convey business intent, which is especially useful for AI Agent collaboration:
 
 ```yaml
 fields:
-  poNumber: string(50)!       # 語法糖：限制最長 50 字元且為必填 (Required)
-  baseAmount: decimal         # 不指定精度
-  totalAmount: decimal(12,2)  # 語法糖：精度 12 位，小數點後 2 位
-  exchangeRate: decimal(8,4)  # 匯率通常需要 4 位小數
+  poNumber: string(50)!       # Shorthand: max length 50, required
+  baseAmount: decimal         # No precision specified
+  totalAmount: decimal(12,2)  # Shorthand: precision 12, scale 2
+  exchangeRate: decimal(8,4)  # Exchange rates typically need 4 decimal places
   isActive: boolean
   email:
     type: string
-    unique: true              # 欄位級唯一約束，等同於宣告單欄位唯一索引
+    unique: true              # Field-level unique constraint — equivalent to a single-field unique index
 ```
 
-**`decimal(precision, scale)` 語法**：`precision` 為總位數，`scale` 為小數位數。不指定時由平台決定預設精度。金融場景建議明確宣告。
+**`decimal(precision, scale)` Syntax**: `precision` is the total number of digits; `scale` is the number of decimal places. When omitted, the platform applies its default. Financial fields should always declare these explicitly.
 
-**`unique` 屬性**：可在任何欄位下宣告，效果等同於在 `indexes` 中加入 `{ fields: [fieldName], unique: true }`，為單欄位唯一約束的語法糖。
+**`unique` Attribute**: Available on any field. Equivalent to declaring `{ fields: [fieldName], unique: true }` under `indexes` — it is syntactic sugar for a single-field unique constraint.
 
-### 2.2 列舉與陣列
+### 2.2 Enums & Arrays
 
-**列舉 — 簡寫語法**（值即顯示名稱，由 i18n 推斷翻譯）：
+**Enum — Shorthand** (value equals label; relies on i18n for display names):
 
 ```yaml
 fields:
@@ -54,7 +54,7 @@ fields:
     default: Draft
 ```
 
-**列舉 — 值/標籤分離語法**（儲存值與顯示名稱不同時使用，例如儲存代碼、顯示中文）：
+**Enum — Explicit Value/Label** (used when the stored value differs from the display label, e.g., numeric codes):
 
 ```yaml
 fields:
@@ -62,36 +62,38 @@ fields:
     type: enum
     options:
       - value: 1
-        label: 低
+        label: Low
       - value: 2
-        label: 中
+        label: Medium
       - value: 3
-        label: 高
+        label: High
     default: 2
 ```
 
-**陣列：**
+**Arrays:**
 ```yaml
 fields:
-  allowedTags: string[]   # 語法糖：宣告一個字串陣列型別
+  allowedTags: string[]   # Shorthand: a plain array of strings
 ```
 
-### 2.3 自動流水號編碼 (Auto-Sequence Generation)
-ERP 單據極度依賴嚴謹的編碼規則。利用 `sequence` 屬性，搭配 Pattern 動態推論歸零週期：
+### 2.3 Auto-Sequence Generation
+
+ERP documents commonly require auto-incrementing sequential numbers. Use the `sequence` property with a pattern string; the parser automatically infers the reset cycle:
 
 ```yaml
 fields:
   poNumber:
     type: string
-    sequence: "PO-{YYYY}{MM}{DD}-{SEQ:4}" # 包含 YYYYMMDD 即自動推斷為「按日歸零流水號」
+    sequence: "PO-{YYYY}{MM}{DD}-{SEQ:4}" # Contains {DD} → parser infers daily reset
     eval:
       readonly: true
 ```
 
-> **Sequence Pattern 語法**：使用大括號 `{...}` 作為佔位符，`{YYYY}`、`{MM}`、`{DD}` 為時間維度，`{SEQ:N}` 為補零 N 位的流水數字。此語法**僅適用於 `sequence` 屬性**，與 `hooks.payload` 的 `${...}` 插值語法性質不同，請勿混淆（詳見 05 第三節）。
+> **Sequence Pattern Syntax**: Uses `{...}` placeholders. `{YYYY}`, `{MM}`, `{DD}` represent date components; `{SEQ:N}` produces a zero-padded incrementing integer of width N. This syntax is **exclusive to the `sequence` property** — it is entirely separate from the `${...}` payload interpolation syntax used in hooks. See [05 Reserved Words](./05_Reserved_Words.md) Section 3 for details.
 
-### 2.4 即時計算欄位 (Computed Field)
-只存在於應用層記憶體，不實體寫入資料庫。各平台 Parser 自行決定在前端記憶體、API 回應層或資料庫 Generated Column 實作，DSL 只聲明意圖。
+### 2.4 Computed Fields
+
+Computed fields are evaluated in application memory and are not stored in the database. The parser marks them as `virtual: true` in the IR. Whether they are implemented as application-layer calculations or database Generated Columns is left to the platform — the DSL only declares the intent.
 
 ```yaml
 fields:
@@ -100,30 +102,30 @@ fields:
     computed: "grossAmount - discountAmount"
 ```
 
-> 表達式語法請參閱 [06. 表達式語言規範](./06_Expression_Language.md)。
+> For expression syntax, see [06. Expression Language](./06_Expression_Language.md).
 
-### 2.5 欄位說明 (`description`)
+### 2.5 Field Description (`description`)
 
 ```yaml
 fields:
   rejectReason:
     type: string
-    description: "退回原因，由審核人員填寫，作為後續改善依據。"
+    description: "Reason for rejection, filled by the approver, used as the basis for subsequent improvement."
     eval:
       required: "status == 'Rejected'"
       hidden: "status != 'Rejected'"
 ```
 
-`description` 為純文字選填屬性，適用於所有欄位型別（包含 `enum`、`lookup`、`computed`）。不支援 Markdown，不進 i18n 提取，不影響任何驗證邏輯。
+`description` is a plain text attribute applicable to all field types, including `enum`, `lookup`, and `computed`. Markdown is not supported. It has no effect on UI rendering or validation.
 
-### 2.6 欄位動態條件控制 (`eval`)
+### 2.6 Dynamic Field Controls (`eval`)
 
-`eval` 是所有欄位控制項的**統一容器**，接受兩種值形式：
+`eval` is a container for the three field-level display and input controls:
 
-| 形式 | 說明 | 範例 |
+| Form | Behavior | Example |
 | :--- | :--- | :--- |
-| 布林字面值 | 靜態永久生效 | `readonly: true` |
-| 表達式字串 | 動態條件，運算結果為 boolean | `readonly: "isLocked == true"` |
+| Boolean literal | Static, always-on condition | `readonly: true` |
+| Expression string | Evaluated at runtime, must return a boolean | `readonly: "isLocked == true"` |
 
 ```yaml
 fields:
@@ -131,63 +133,64 @@ fields:
     type: string
     sequence: "PO-{YYYY}{MM}-{SEQ:4}"
     eval:
-      readonly: true                      # 靜態：永遠唯讀
+      readonly: true                      # Always read-only
 
   rejectReason:
     type: string
     eval:
-      required: "status == 'Rejected'"   # 動態：狀態為拒絕時必填
-      hidden: "status != 'Rejected'"     # 動態：否則在 UI 上實體隱藏不渲染
-      readonly: "isLocked == true"       # 動態：鎖定時唯讀
+      required: "status == 'Rejected'"   # Required only when status is Rejected
+      hidden: "status != 'Rejected'"     # Hidden in all other states
+      readonly: "isLocked == true"       # Read-only when the record is locked
 ```
 
-### 2.7 虛擬查表映射 (Lookup / Virtual Fields)
-當需要在畫面上呈現來自關聯實體的某項屬性時（如：選了供應商要顯示電話），為確保 Database 遵守第三正規化，可使用 `lookup` 類型，不重複轉存資料：
+### 2.7 Virtual Lookup Fields (`type: lookup`)
+
+When a form needs to display an attribute from a related entity (e.g., the supplier's phone number) without duplicating data in the database, use a `lookup` field. It is virtual — not stored in the database — and always reads from the live relation.
 
 ```yaml
 fields:
   supplierPhone:
     type: lookup
-    relation: supplier        # 引用 relations 節點中宣告的關聯 key 名稱
-    field: phoneNumber        # 抓取對方實體身上的 phoneNumber 屬性呈現
+    relation: supplier    # Must match a key name under `relations` (not the FK column name)
+    field: phoneNumber    # The property to read from the target entity
 ```
 
-> **注意：** `relation` 的值對應的是 `relations` 節點下的 **key 名稱**（如 `supplier`），而非資料庫外鍵欄位名稱（如 `supplierId`）。外鍵欄位由解析器自動生成，無需手動宣告。
+> **Important**: The `relation` value must match the **key name** defined under the `relations` node (e.g., `supplier`), not the generated foreign key column name (e.g., `supplierId`). The parser resolves the FK automatically.
 
 ---
 
-## 3. 關聯定義 (Relations)
+## 3. Relations
 
-**所有關聯統一在 `relations` 節點宣告**，解析器將自動在資料庫層推算並生成對應的外鍵欄位（如 `supplierId`、`projectId`）。`fields` 節點內不再宣告任何關聯。
+All relationships are declared under `relations`. The parser automatically generates the corresponding foreign key fields (e.g., `supplierId`, `projectId`). Do not declare foreign key columns manually in `fields`.
 
 ```yaml
 relations:
-  # 多對一 (belongsTo)：單一名稱，解析器自動推算外鍵為 supplierId
+  # Many-to-One (belongsTo): generates supplierId FK automatically
   supplier: Supplier
 
-  # 一對多 (hasMany)：陣列框語法，解析器自動推算外鍵對應
+  # One-to-Many (hasMany)
   items: [PurchaseOrderItem]
 
-  # 多對一 (belongsTo)
+  # Another Many-to-One
   project: Project
 
-  # 支援處理「無窮樹狀階層 (Tree/Hierarchy)」(如：部門組織圖)
-  parent: Department      # 隸屬上級部門 (belongsTo 自己)
-  children: [Department]  # 擁有多個子部門 (hasMany 自己)
+  # Self-referencing tree structure (e.g., org chart)
+  parent: Department      # belongsTo — points to parent node
+  children: [Department]  # hasMany — points to child nodes
 ```
 
-**外鍵命名約定**：`belongsTo` 關聯的外鍵欄位名稱由解析器依 `{relationKey}Id` 規則自動生成。
+**Foreign key naming convention**: For `belongsTo` relations, the FK column name is derived as `{relationKey}Id`. For example, `supplier` → `supplierId`.
 
 ---
 
-## 4. 索引設計 (Indexes)
+## 4. Indexes
 
-確保龐大企業資料能在資料庫端得到最佳化。`name` 為**選填**，省略時解析器依欄位名自動生成。
+Indexes optimize database query performance. The `name` field is optional — if omitted, the parser generates a name automatically (e.g., `idx_status_createdAt`).
 
 ```yaml
 indexes:
-  - fields: [status, createdAt]           # name 省略 → 自動生成 idx_status_createdAt
+  - fields: [status, createdAt]           # Name omitted → auto-generated
   - fields: [companyId, orderNumber]
     unique: true
-    name: uq_company_order                # 明確命名（選填）
+    name: uq_company_order                # Explicit name
 ```

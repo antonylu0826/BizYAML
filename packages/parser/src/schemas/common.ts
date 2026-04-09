@@ -39,7 +39,7 @@ export const FIELD_SHORTHAND_REGEX =
  */
 export const FieldShorthandSchema = z.string().regex(
   /^(string(\(\d+\))?|integer|decimal(\(\d+,\d+\))?|boolean|date|datetime|json)(\[\])?(!)?$/,
-  '無效的欄位型別語法糖。範例：string、string(50)!、decimal(12,2)、boolean、string[]',
+  'Invalid field type shorthand. Example: string, string(50)!, decimal(12,2), boolean, string[]',
 )
 
 /**
@@ -53,5 +53,5 @@ export type EvalValue = z.infer<typeof EvalValueSchema>
  */
 export const EntityNameSchema = z.string().regex(
   /^[A-Z][a-zA-Z0-9]*$/,
-  '實體名稱必須為大駝峰 (PascalCase)，如 PurchaseOrder',
+  'Entity name must be PascalCase, e.g. PurchaseOrder',
 )

@@ -1,141 +1,141 @@
-# 03. 商業邏輯層 (Business Logic)
+# 03. Business Logic Layer
 
-與傳統將大量 `if-else` 寫死在 Controller 的作法不同，BizYAML 主張將業務規則抽象化，統一存放在 `[Entity].flow.yaml` 供解析與引擎自動執行。
+Unlike traditional methodologies that hardcode numerous `if-else` blocks inside Controllers, BizYAML advocates abstracting business rules, centralizing them in `[Entity].flow.yaml` for parsers and engines to execute automatically.
 
 ---
 
-## 1. 跨欄位與實體驗證 (Entity/Record Validations)
+## 1. Cross-Field and Entity Validations (Entity/Record Validations)
 
-某些邏輯不專屬於單個欄位，而是紀錄整體層級的查核，宣告於根目錄下的 `validations`：
+Certain logic does not belong to a single field, but rather requires record-wide checks. These are declared in the root `validations` directory:
 
 ```yaml
 validations:
   - rule: "endDate >= startDate"
-    message: "結束日期不能早於開始日期"
+    message: "End date cannot precede the start date."
   - rule: "discountAmount <= totalAmount * 0.5"
-    message: "折扣金額不可超過總額的 50%"
+    message: "Discount amount cannot exceed 50% of the total amount."
 ```
 
-> **觸發時機**：根層級的 `validations` 在每次**建立**或**更新**紀錄時觸發，與當前狀態無關。這是整個實體生命週期中的基礎資料完整性守衛。
+> **Trigger Timing**: Root level `validations` are triggered every time a record is **created** or **updated**, regardless of the current state. This serves as the fundamental data integrity guard throughout the entity's lifecycle.
 
-> 表達式語法請參閱 [06. 表達式語言規範](./06_Expression_Language.md)。
+> For expression syntax, please refer to [06. Expression Language](./06_Expression_Language.md).
 
 ---
 
-## 2. 狀態機與工作流 (Workflow & State Machine)
+## 2. State Machine and Workflow (Workflow & State Machine)
 
-利用狀態機 (FSM) 取代混亂的流程審核邏輯，從源頭就確立節點轉換間的前置條件與必備工作。
+Utilizes Finite State Machines (FSM) to replace chaotic review flow logic, establishing the preconditions and necessary tasks between node transitions right from the source.
 
-### 2.1 `statusField` 與 `enum` 的耦合約定
+### 2.1 Coupling Convention Between `statusField` and `enum`
 
-`workflow.statusField` 必須引用 `fields` 中一個已宣告的欄位，且該欄位**必須為 `type: enum`**。Workflow 中所有 `initial`、`terminal`、`transitions[].from[]`、`transitions[].to` 所使用的狀態值，**必須全數存在於該 enum 的 `options` 之中**。
+`workflow.statusField` must reference an existing field declared in `fields`, and this field **must be of `type: enum`**. All state values used in `initial`, `terminal`, `transitions[].from[]`, and `transitions[].to` within the Workflow **must strictly exist within the `options` of that enum**.
 
-違反此約定時，解析器應在**編譯期**拋出錯誤，說明哪個狀態值未在 enum options 中宣告。
+If this convention is violated, the parser should throw an error during the **compilation phase**, specifying which state value was not declared in the enum options.
 
 ```yaml
-# fields 中的 enum 宣告（.entity.yaml）
+# Enum declaration in fields (.entity.yaml)
 fields:
   status:
     type: enum
     options: [Draft, Pending, Approved, Rejected, Cancelled]
     default: Draft
 
-# workflow 中引用的所有狀態值必須都在上方 options 清單中
+# All state values referenced in the workflow must exist in the options list above
 workflow:
-  statusField: status        # ← 指向上方的 status 欄位
-  initial: Draft             # ← 必須在 options 中
+  statusField: status        # ← Points to the status field above
+  initial: Draft             # ← Must be in options
   terminal: [Approved, Cancelled]
   transitions:
     - action: Submit
-      from: [Draft, Rejected]  # ← 必須在 options 中
-      to: Pending              # ← 必須在 options 中
+      from: [Draft, Rejected]  # ← Must be in options
+      to: Pending              # ← Must be in options
 ```
 
-### 2.2 完整工作流範例
+### 2.2 Complete Workflow Example
 
 ```yaml
 workflow:
   statusField: status
   initial: Draft
-  terminal: [Approved, Cancelled]   # 進入終態後不可再發起任何 transition
+  terminal: [Approved, Cancelled]   # Once entering a terminal state, no further transitions can be initiated
 
   transitions:
     - action: Submit
-      label: 送出審核
-      description: "草稿或退回狀態下，填寫人確認資料無誤後送出，進入待審核佇列。"
+      label: Submit for Review
+      description: "In the Draft or Rejected state, the filler verifies the data is correct and submits it, entering the pending review queue."
       from: [Draft, Rejected]
       to: Pending
-      guard:                            # 動作觸發前的守衛條件查核
+      guard:                            # Guard condition checks before the action is triggered
         validations:
           - rule: "totalAmount > 0"
-            message: "金額必須大於零"
+            message: "Amount must be greater than zero."
           - rule: "count(items) > 0"
-            message: "必須至少有一筆明細"
+            message: "There must be at least one line item."
 
     - action: Approve
-      label: 核准
+      label: Approve
       from: [Pending]
       to: Approved
 
     - action: Reject
-      label: 退回單據
+      label: Reject Document
       from: [Pending]
       to: Rejected
       guard:
-        requireParams: [rejectReason]   # 觸發「退回」動作當下，強制附帶填寫退回理由
+        requireParams: [rejectReason]   # When the "Reject" action is triggered, filling out the rejection reason is mandatory
 
     - action: Cancel
-      label: 作廢
+      label: Cancel
       from: [Draft]
       to: Cancelled
 ```
 
-### 2.3 `guard` 與根層級 `validations` 的差異
+### 2.3 Differences between `guard` and Root Level `validations`
 
-| | 根層級 `validations` | `transitions[].guard.validations` |
+| | Root Level `validations` | `transitions[].guard.validations` |
 | :--- | :--- | :--- |
-| **觸發時機** | 每次建立或更新紀錄時 | 僅在觸發特定 transition 動作時 |
-| **用途** | 資料完整性守衛（永遠成立的規則） | 特定動作的前置條件（僅在該動作下才有意義） |
-| **範例** | `endDate >= startDate` | `count(items) > 0`（送審前才需要） |
+| **Trigger Timing** | Every time a record is created or updated | Only when a specific transition action is triggered |
+| **Purpose** | Data integrity guard (rules that are always true) | Preconditions for specific actions (only meaningful under that action) |
+| **Example** | `endDate >= startDate` | `count(items) > 0` (only needed before submission) |
 
-> **`guard` vs `eval`**：`eval` 用於欄位層級的靜態/動態條件控制（`hidden`、`readonly`、`required` 等）；`guard` 專屬於 `workflow.transitions`，代表「執行動作前才查核的守衛邏輯」。兩者語義不同，不可互換。
+> **`guard` vs `eval`**: `eval` is used for static/dynamic condition control at the field level (`hidden`, `readonly`, `required`, etc.); `guard` is exclusive to `workflow.transitions`, representing "guard logic checked only before executing an action". The semantics of the two are different and they cannot be interchanged.
 
 ---
 
-## 3. 外部掛鉤與非同步整合 (Webhooks / Events)
+## 3. External Hooks and Asynchronous Integration (Webhooks / Events)
 
-為了保有最大的擴充彈性，允許工作流掛載事件鉤子，對接任何支援 Webhook 協議的外部系統或自動化平台。BizYAML 本身不綁定任何特定的外部工具。
+To maintain maximum extensibility, workflows are allowed to mount event hooks to integrate with any external systems or automation platforms that support the Webhook protocol. BizYAML itself is not bound to any specific external tools.
 
 ```yaml
 hooks:
   - event: "after:transition:Approve"
     type: webhook
     url: "https://your-automation-platform/webhook/po-approved"
-    method: POST                        # HTTP 方法，預設為 POST
+    method: POST                        # HTTP method, defaults to POST
     async: true
-    headers:                            # 自訂 HTTP Header（如驗證金鑰）
+    headers:                            # Custom HTTP Headers (e.g., authentication keys)
       X-Api-Key: "secret-token"
     payload:
       poId: "${id}"
       amount: "${totalAmount}"
-    retry:                              # 失敗重試策略（選填）
+    retry:                              # Failure retry strategy (optional)
       attempts: 3
-      backoff: exponential              # 可選：fixed | exponential
+      backoff: exponential              # Optional: fixed | exponential
 ```
 
-### 3.1 支援的事件格式
+### 3.1 Supported Event Formats
 
-| 事件格式 | 觸發時機 |
+| Event Format | Trigger Timing |
 | :--- | :--- |
-| `after:transition:{Action}` | 指定狀態轉換成功後 |
-| `before:transition:{Action}` | 指定狀態轉換執行前 |
-| `after:transition:*` | **任意**狀態轉換成功後（萬用字元） |
-| `before:transition:*` | **任意**狀態轉換執行前（萬用字元） |
-| `after:create` | 紀錄建立後 |
-| `after:update` | 紀錄更新後 |
+| `after:transition:{Action}` | After the specified state transition succeeds |
+| `before:transition:{Action}` | Before the specified state transition executes |
+| `after:transition:*` | After **any** state transition succeeds (wildcard) |
+| `before:transition:*` | Before **any** state transition executes (wildcard) |
+| `after:create` | After record creation |
+| `after:update` | After record update |
 
-> **萬用字元 `*`**：使用 `after:transition:*` 可對所有 transition 掛載同一個 hook，常見於稽核日誌、訊息佇列通知等需要攔截全部狀態變化的場景，避免重複宣告多份相同的 hook。
+> **Wildcard `*`**: Using `after:transition:*` mounts the same hook to all transitions. This is common in auditing logs, message queue notifications, etc., where all state changes need to be intercepted, avoiding the repetition of declaring multiple identical hooks.
 
-> **`payload` 插值語法**：使用 `${fieldName}` 語法，解析器在事件觸發時動態注入當前紀錄的欄位值。僅支援當前實體的直接欄位，不支援跨關聯路徑（如 `${supplier.name}`）。如需傳遞關聯資料，應由接收端自行查詢。
+> **`payload` Interpolation Syntax**: Using the `${fieldName}` syntax, the parser dynamically injects the current record's field values when the event is triggered. Only direct fields of the current entity are supported; cross-relation paths (like `${supplier.name}`) are not supported. If related data needs to be passed, the receiving end should query it themselves.
 
-> **最佳實踐**：BizYAML 只負責單據本身的狀態扭轉。複合型任務（如發送通知、跨系統拋轉資料）都應透過宣告 `async: true` 的 webhook 交付給外部平台處理，實現「業務邏輯歸系統，自動化任務歸外部」的乾淨切分。
+> **Best Practices**: BizYAML is only responsible for the state transitions of the document itself. Composite tasks (like sending notifications or transferring data across systems) should be handed over to external platforms by declaring webhooks with `async: true`, achieving a clean separation of "business logic belongs to the system, automation tasks belong externally."

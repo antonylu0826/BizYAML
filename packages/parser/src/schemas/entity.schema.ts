@@ -5,7 +5,7 @@ import { ValidationsSchema, WorkflowSchema, HooksSchema } from './flow.schema.js
 import { ViewsSchema } from './views.schema.js'
 
 // ---------------------------------------------------------------------------
-// .entity.yaml 根 schema
+// .entity.yaml root schema
 // ---------------------------------------------------------------------------
 
 export const EntityFileSchema = z.object({
@@ -19,43 +19,43 @@ export const EntityFileSchema = z.object({
 export type EntityFile = z.infer<typeof EntityFileSchema>
 
 // ---------------------------------------------------------------------------
-// .flow.yaml 根 schema（重新匯出，保持 entity.schema 作為統一入口）
+// .flow.yaml root schema (re-exported, keeping entity.schema as unified entry point)
 // ---------------------------------------------------------------------------
 
 export { FlowFileSchema } from './flow.schema.js'
 export type { FlowFile } from './flow.schema.js'
 
 // ---------------------------------------------------------------------------
-// .views.yaml 根 schema
+// .views.yaml root schema
 // ---------------------------------------------------------------------------
 
 export { ViewsFileSchema } from './views.schema.js'
 export type { ViewsFile } from './views.schema.js'
 
 // ---------------------------------------------------------------------------
-// 單檔模式（Single-file）：所有根節點可合併在一個 .entity.yaml 中
+// Single-file mode: all root nodes can be combined in one .entity.yaml
 // ---------------------------------------------------------------------------
 
 export const SingleFileSchema = z.object({
   name:        EntityNameSchema,
   label:       z.string().optional(),
   description: z.string().optional(),
-  // entity 層
+  // entity layer
   fields:      FieldsSchema,
   relations:   RelationsSchema.optional(),
   indexes:     IndexesSchema.optional(),
-  // flow 層
+  // flow layer
   validations: ValidationsSchema.optional(),
   workflow:    WorkflowSchema.optional(),
   hooks:       HooksSchema.optional(),
-  // views 層
+  // views layer
   views:       ViewsSchema.optional(),
 })
 export type SingleFile = z.infer<typeof SingleFileSchema>
 
 // ---------------------------------------------------------------------------
-// 通用 YAML 文件 schema：自動判斷應套用哪個 schema
-// 解析器在 Discovery 階段後決定要用哪個，此聯集供 Linter 的「不知道副檔名時」使用
+// Universal YAML file schema: auto-determine which schema to apply
+// Parser decides which one to use after Discovery phase, this union is for Linter "when extension is unknown"
 // ---------------------------------------------------------------------------
 
 export const AnyBizYamlFileSchema = z.union([

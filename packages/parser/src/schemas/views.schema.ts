@@ -1,16 +1,16 @@
 import { z } from 'zod'
 
 // ---------------------------------------------------------------------------
-// list 視圖
+// list view
 // ---------------------------------------------------------------------------
 
 /**
- * defaultSort：欄位名稱，前綴 `-` 代表降序。
- * 範例：`-createdAt`、`poNumber`
+ * defaultSort: field name, prefix `-` represents descending order.
+ * Example: `-createdAt`, `poNumber`
  */
 const DefaultSortSchema = z.string().regex(
   /^-?[a-zA-Z][a-zA-Z0-9]*$/,
-  '無效的排序格式。範例：createdAt（升序）或 -createdAt（降序）',
+  'Invalid sort format. Example: createdAt (ascending) or -createdAt (descending)',
 )
 
 const ListViewSchema = z.object({
@@ -21,29 +21,29 @@ const ListViewSchema = z.object({
 export type ListView = z.infer<typeof ListViewSchema>
 
 // ---------------------------------------------------------------------------
-// detail 視圖佈局容器
+// detail view layout container
 // ---------------------------------------------------------------------------
 
-/** group 容器：將欄位收納在同一張卡片中 */
+/** group container: groups fields into the same card */
 const GroupLayoutSchema = z.object({
   type:   z.literal('group'),
   label:  z.string().optional(),
   fields: z.array(z.string().min(1)).min(1),
 })
 
-/** tabs 容器的單一分頁 */
+/** Single tab in tabs container */
 const TabItemSchema = z.object({
   label:  z.string(),
   fields: z.array(z.string().min(1)).min(1),
 })
 
-/** tabs 容器：水平分頁 */
+/** tabs container: horizontal tabs */
 const TabsLayoutSchema = z.object({
   type:     z.literal('tabs'),
   children: z.array(TabItemSchema).min(1),
 })
 
-/** 佈局容器聯集 */
+/** Layout container union */
 const LayoutItemSchema = z.discriminatedUnion('type', [
   GroupLayoutSchema,
   TabsLayoutSchema,
@@ -51,7 +51,7 @@ const LayoutItemSchema = z.discriminatedUnion('type', [
 export type LayoutItem = z.infer<typeof LayoutItemSchema>
 
 // ---------------------------------------------------------------------------
-// actions 設定
+// actions configuration
 // ---------------------------------------------------------------------------
 
 const ActionsSchema = z.object({
@@ -60,7 +60,7 @@ const ActionsSchema = z.object({
 })
 
 // ---------------------------------------------------------------------------
-// detail 視圖
+// detail view
 // ---------------------------------------------------------------------------
 
 const DetailViewSchema = z.object({
@@ -70,7 +70,7 @@ const DetailViewSchema = z.object({
 export type DetailView = z.infer<typeof DetailViewSchema>
 
 // ---------------------------------------------------------------------------
-// views 根節點
+// views root node
 // ---------------------------------------------------------------------------
 
 export const ViewsSchema = z.object({
@@ -80,7 +80,7 @@ export const ViewsSchema = z.object({
 export type Views = z.infer<typeof ViewsSchema>
 
 // ---------------------------------------------------------------------------
-// .views.yaml 根 schema
+// .views.yaml root schema
 // ---------------------------------------------------------------------------
 
 export const ViewsFileSchema = z.object({

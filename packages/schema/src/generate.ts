@@ -10,7 +10,7 @@ const outDir = join(__dirname, '..', 'dist')
 mkdirSync(outDir, { recursive: true })
 
 const schemas = [
-  { name: 'bizyaml-single',  schema: SingleFileSchema,  description: 'BizYAML 單檔模式（所有根節點合併）' },
+  { name: 'bizyaml-single',  schema: SingleFileSchema,  description: 'BizYAML single file mode (all root nodes combined)' },
   { name: 'bizyaml-entity',  schema: EntityFileSchema,  description: 'BizYAML .entity.yaml schema' },
   { name: 'bizyaml-flow',    schema: FlowFileSchema,    description: 'BizYAML .flow.yaml schema' },
   { name: 'bizyaml-views',   schema: ViewsFileSchema,   description: 'BizYAML .views.yaml schema' },

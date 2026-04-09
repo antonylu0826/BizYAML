@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { EvalValueSchema, EntityNameSchema, FieldShorthandSchema } from './common.js'
 
 // ---------------------------------------------------------------------------
-// eval 容器（欄位層級）
+// eval container (field level)
 // ---------------------------------------------------------------------------
 
 export const FieldEvalSchema = z.object({
@@ -13,7 +13,7 @@ export const FieldEvalSchema = z.object({
 export type FieldEval = z.infer<typeof FieldEvalSchema>
 
 // ---------------------------------------------------------------------------
-// enum options：支援簡寫陣列與值/標籤分離兩種形式
+// enum options: supports shorthand array and separated value/label formats
 // ---------------------------------------------------------------------------
 
 const EnumOptionSimpleSchema = z.string()
@@ -25,30 +25,30 @@ export const EnumOptionSchema = z.union([EnumOptionSimpleSchema, EnumOptionFullS
 export type EnumOption = z.infer<typeof EnumOptionSchema>
 
 // ---------------------------------------------------------------------------
-// 各欄位型別的完整物件形式
+// Complete object format for each field type
 // ---------------------------------------------------------------------------
 
-/** 基礎型別欄位（string, integer, decimal, boolean, date, datetime, json） */
+/** Base type field (string, integer, decimal, boolean, date, datetime, json) */
 const BaseFieldSchema = z.object({
   type:        z.enum(['string', 'integer', 'decimal', 'boolean', 'date', 'datetime', 'json']),
   description: z.string().optional(),
   default:     z.unknown().optional(),
   unique:      z.boolean().optional(),
   eval:        FieldEvalSchema.optional(),
-  // string 專用
+  // specific to string
   maxLength: z.number().int().positive().optional(),
-  // decimal 專用
+  // specific to decimal
   precision: z.number().int().positive().optional(),
   scale:     z.number().int().min(0).optional(),
-  // 流水號
+  // Auto-increment sequence
   sequence: z.string().optional(),
-  // 計算欄位
+  // Computed field
   computed: z.string().optional(),
-  // 陣列型別
+  // Array type
   array: z.boolean().optional(),
 })
 
-/** enum 欄位 */
+/** enum field */
 const EnumFieldSchema = z.object({
   type:        z.literal('enum'),
   description: z.string().optional(),
@@ -58,7 +58,7 @@ const EnumFieldSchema = z.object({
   eval:        FieldEvalSchema.optional(),
 })
 
-/** lookup 虛擬查表欄位 */
+/** lookup virtual table field */
 const LookupFieldSchema = z.object({
   type:        z.literal('lookup'),
   description: z.string().optional(),
@@ -66,7 +66,7 @@ const LookupFieldSchema = z.object({
   field:       z.string().min(1),
 })
 
-/** 欄位完整物件形式（三種型別的聯集） */
+/** Field complete object format (union of three types) */
 export const FieldObjectSchema = z.union([
   BaseFieldSchema,
   EnumFieldSchema,
@@ -75,38 +75,38 @@ export const FieldObjectSchema = z.union([
 export type FieldObject = z.infer<typeof FieldObjectSchema>
 
 /**
- * 單一欄位的宣告值：
- *   - 語法糖字串：`string(50)!`、`decimal(12,2)`、`boolean`、`string[]`
- *   - 完整物件形式
+ * Declaration value of a single field:
+ *   - Shorthand string: `string(50)!`, `decimal(12,2)`, `boolean`, `string[]`
+ *   - Complete object format
  */
 export const FieldValueSchema = z.union([FieldShorthandSchema, FieldObjectSchema])
 export type FieldValue = z.infer<typeof FieldValueSchema>
 
-/** `fields` 節點：key 為欄位名，value 為欄位定義 */
+/** `fields` node: key is field name, value is field definition */
 export const FieldsSchema = z.record(z.string().min(1), FieldValueSchema)
 export type Fields = z.infer<typeof FieldsSchema>
 
 // ---------------------------------------------------------------------------
-// relations 節點
+// relations node
 // ---------------------------------------------------------------------------
 
 /**
- * 單一關聯的宣告值：
- *   - `Supplier`          → belongsTo
- *   - `[PurchaseOrderItem]` → hasMany（YAML 中宣告為包含單一元素的陣列）
+ * Declaration value of a single relation:
+ *   - `Supplier`          -> belongsTo
+ *   - `[PurchaseOrderItem]` -> hasMany (declared as single-element array in YAML)
  */
 export const RelationValueSchema = z.union([
-  EntityNameSchema,                        // belongsTo：直接寫實體名稱
-  z.tuple([EntityNameSchema]),             // hasMany：單元素陣列
+  EntityNameSchema,                        // belongsTo: direct entity name
+  z.tuple([EntityNameSchema]),             // hasMany: single-element array
 ])
 export type RelationValue = z.infer<typeof RelationValueSchema>
 
-/** `relations` 節點：key 為關聯名，value 為關聯目標 */
+/** `relations` node: key is relation name, value is relation target */
 export const RelationsSchema = z.record(z.string().min(1), RelationValueSchema)
 export type Relations = z.infer<typeof RelationsSchema>
 
 // ---------------------------------------------------------------------------
-// indexes 節點
+// indexes node
 // ---------------------------------------------------------------------------
 
 export const IndexSchema = z.object({

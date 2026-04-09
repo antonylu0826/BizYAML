@@ -1,96 +1,96 @@
-# 01. 架構總覽與哲學 (Architecture)
+# 01. Architecture Overview & Philosophy
 
-BizYAML 是一套專為開發企業 CRUD、ERP 等複雜商業邏輯系統所設計的「領域特定語言 (DSL)」。旨在作為領域專家與開發人員之間的共同語言，實現單一真實來源 (Single Source of Truth)。
+BizYAML is a "Domain Specific Language (DSL)" designed specifically for developing complex business logic systems like enterprise CRUD and ERP systems. It aims to serve as a common language between domain experts and developers to achieve a Single Source of Truth (SSOT).
 
-## 1. 核心設計哲學
+## 1. Core Design Philosophy
 
-BizYAML 的設計圍繞著三大核心哲學：
+BizYAML's design revolves around three core philosophies:
 
-1. **約定優於配置 (Convention over Configuration)**：提供極簡語法糖，盡可能隱藏冗餘的設定。例如，關聯設定可以簡化到只寫一個陣列符號 `[TargetEntity]`。
-2. **關注點分離 (Separation of Concerns)**：將複雜的商業系統拆分為靜態資料結構與動態處理流程，確保跨部門協作不會互相干擾。
-3. **介面驅動 (Interface-Driven)**：DSL 不單單只是產生資料庫 ORM Schema，它同時具備前端視圖排版與多語系對接能力。
+1. **Convention over Configuration**: Provides minimalist syntax sugar, hiding redundant configurations wherever possible. For Example, relationship configurations can be simplified down to writing an array symbol `[TargetEntity]`.
+2. **Separation of Concerns**: Splits complex business systems into static data structures and dynamic processing workflows to ensure cross-department collaboration does not interfere with each other.
+3. **Interface-Driven**: The DSL is not merely mapped to generate database ORM schemas; it simultaneously possesses the capabilities for frontend views layout and i18n support integrations.
 
 ---
 
-## 2. 檔案與模組約定
+## 2. File and Module Conventions
 
-### 2.1 目錄即模組 (Directory as Module)
-強烈建議透過實體的「資料夾位置」來自動推斷其所屬的 Module。開發者無須在 YAML 內重複宣告 `module`。
+### 2.1 Directory as Module
+It is highly recommended to automatically infer the belonging Module through the physical "directory path". Developers do not need to repeatedly declare `module` within the YAML itself.
 
-**範例結構：**
+**Example Structure:**
 ```text
 /biz-schema
-  /Procurement                <-- 自動推斷 module: Procurement
+  /Procurement                <-- Automatically inferred module: Procurement
     PurchaseOrder.entity.yaml 
     PurchaseOrder.flow.yaml
     PurchaseOrder.views.yaml
     Supplier.entity.yaml
 ```
-當 `PurchaseOrder.entity.yaml` 置於目錄下時，解析器將自動為其註冊全域唯一識別碼 `Procurement.PurchaseOrder`。
+When `PurchaseOrder.entity.yaml` is placed underneath the directory, the parser will automatically register it with the globally unique identifier `Procurement.PurchaseOrder`.
 
-### 2.2 依職責拆檔約定
-針對欄位眾多、邏輯複雜的實體，我們推薦在同一資料夾下採行「依檔名後綴拆分職責」的模式。
-解析器在編譯期間會智慧地將「相同主檔名」的設定進行合併：
+### 2.2 Responsibility Splitting Convention
+For entities with an abundance of calculation fields and complex logic, we recommend adopting the "responsibility splitting by file suffix" pattern under the same folder.
+The parser will intelligently merge configurations with the "same base filename" during the compilation process:
  
-* `[Entity].entity.yaml`: 負責欄位、關聯、索引等靜態設定 (核心讀者：DBA / Backend)。
-* `[Entity].flow.yaml`: 負責驗證規則、狀態工作流、事件等動態邏輯 (核心讀者：PM / Flow Designer)。
-* `[Entity].views.yaml`: 負責資料呈現在畫面上時的佈局與視覺資訊 (核心讀者：Frontend)。
+* `[Entity].entity.yaml`: Responsible for static definitions such as fields, relations, indexes, etc. (Core audience: DBA / Backend).
+* `[Entity].flow.yaml`: Responsible for dynamic workflow logic, validation rules, state machines, and events (Core audience: PM / Flow Designer).
+* `[Entity].views.yaml`: Responsible for the visual layout mapping when presenting data on screens (Core audience: Frontend).
 
-> **Tip**: 如果遇到極度簡單的字典檔（例如：國家代碼表），你可以直接將所有內容合併寫入唯一的 `Country.entity.yaml` 中，不強制拆檔。
+> **Tip**: If you encounter an extremely simple dictionary table (e.g. Country Codes), you can merge all definitions into a single `Country.entity.yaml` without mandatory file splitting.
 
 ---
 
-## 3. 編譯管線 (Compilation Pipeline)
+## 3. Compilation Pipeline
 
-BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的編譯管線，最終產出一份**平台無關的中間表示 (Intermediate Representation, IR)**，供下游的程式碼生成器或動態引擎消費。
+BizYAML's raw YAML files are not executed directly but instead pass through a three-stage compilation pipeline, ultimately generating a **Platform-Agnostic Intermediate Representation (IR)** destined for consumption by downstream code generators or dynamic engines.
 
 ```text
 ┌─────────────┐     ┌─────────────┐     ┌──────────────┐     ┌─────────────────┐
-│ YAML Source  │ ──▶ │  Discovery  │ ──▶ │ Parse/Merge  │ ──▶ │  Validate/Emit  │
-│  (.entity    │     │  & Grouping │     │ & Desugar    │     │  IR (JSON)      │
-│   .flow      │     │             │     │              │     │                 │
-│   .views)    │     └─────────────┘     └──────────────┘     └─────────────────┘
+│ YAML Source │ ──▶ │  Discovery  │ ──▶ │ Parse/Merge  │ ──▶ │  Validate/Emit  │
+│  (.entity   │     │  & Grouping │     │ & Desugar    │     │  IR (JSON)      │
+│   .flow     │     │             │     │              │     │                 │
+│   .views)   │     └─────────────┘     └──────────────┘     └─────────────────┘
 └─────────────┘           ①                    ②                     ③
 ```
 
-### 3.1 階段一：Discovery（探索與分組）
+### 3.1 Phase One: Discovery & Grouping
 
-解析器遞迴掃描指定的根目錄，依照以下規則建立實體清單：
+The parser recursively crawls the root directory and establishes the entities list according to the following conventions:
 
-1. **辨識模組**：以資料夾路徑推斷 module 名稱。
-2. **辨識實體**：以去除後綴（`.entity.yaml`、`.flow.yaml`、`.views.yaml`）後的主檔名辨識實體名稱。
-3. **分組**：將同一資料夾下主檔名相同的檔案歸為同一組。
+1. **Identify Module**: Infers module name from the folder path structure.
+2. **Identify Entity**: Derives entity name based on the base filename dropping the suffixes (`.entity.yaml`, `.flow.yaml`, `.views.yaml`).
+3. **Grouping**: Groups files under the exact same folder with identical base filename into one cohort.
 
 ```text
 /Procurement/PurchaseOrder.entity.yaml  ─┐
-/Procurement/PurchaseOrder.flow.yaml     ├─▶ 一組，實體 = Procurement.PurchaseOrder
+/Procurement/PurchaseOrder.flow.yaml     ├─▶ One Group, Entity = Procurement.PurchaseOrder
 /Procurement/PurchaseOrder.views.yaml    ─┘
-/Procurement/Supplier.entity.yaml        ──▶ 一組，實體 = Procurement.Supplier
+/Procurement/Supplier.entity.yaml        ──▶ One Group, Entity = Procurement.Supplier
 ```
 
-### 3.2 階段二：Parse、Merge、Desugar（解析、合併、去糖）
+### 3.2 Phase Two: Parse, Merge, and Desugar
 
-#### 合併策略 (Merge Strategy)
+#### Merge Strategy
 
-每種檔案後綴**擁有 (owns)** 特定的根節點 (Root Keys)。合併時，解析器依照「誰擁有誰」的規則將各檔內容組裝成一棵完整的實體樹：
+Each file suffix **owns** specific root keys. When merging, the parser determines combinations based on the "who owns what" rules forming a completed structural tree:
 
-| 擁有的根節點 | `.entity.yaml` | `.flow.yaml` | `.views.yaml` |
+| Owned Root Node | `.entity.yaml` | `.flow.yaml` | `.views.yaml` |
 | :--- | :---: | :---: | :---: |
-| `name`, `label` | ✅ 主要來源 | ⚠️ 可重複宣告，必須一致 | ⚠️ 可重複宣告，必須一致 |
+| `name`, `label` | ✅ Primary Source | ⚠️ Repeatable, must be identical | ⚠️ Repeatable, must be identical |
 | `fields`, `relations`, `indexes` | ✅ | ❌ | ❌ |
 | `validations`, `workflow`, `hooks` | ❌ | ✅ | ❌ |
 | `views` | ❌ | ❌ | ✅ |
 
-**衝突規則**：
-- 若某個根節點出現在**非其所屬**的檔案後綴中 → **編譯錯誤**，附帶明確訊息指出該節點應搬移到正確的檔案。
-- `name` 和 `label` 允許在多個檔案中出現（方便各檔案獨立閱讀），但其值**必須完全一致**，否則為編譯錯誤。
-- 單檔模式（只有一個 `.entity.yaml`）：所有根節點均可在同一檔案中出現，不受擁有權限制。解析器以「該目錄下只有一份 YAML 檔案」為判斷條件進入此模式。
+**Conflict Rules**:
+- If a root node appears inside a **file extension it doesn't belong to** -> **Compilation Error**, accompanied by a clear message instructing moving the block to the correct file.
+- `name` and `label` are permitted across multiple files (for self-containment purposes), but their respective values **must be exactly identical**, otherwise leading to a compile error.
+- Single-File Mode (Only one `.entity.yaml` present): All root nodes can reside under one monolithic file, voiding ownership boundaries. The parser will enter this mode by concluding "there is only one YAML file located within the grouping folder."
 
-#### 語法糖還原 (Desugar)
+#### Syntactic Desugar
 
-合併完成後，解析器將所有語法糖展開為標準化的完整形式：
+After the merge finishes, the parser expands any syntactic sugar into standardized and comprehensive canonical formats:
 
-| 語法糖 | 還原結果 |
+| Markdown Syntax Sugar | Desugared IR Format |
 | :--- | :--- |
 | `title: string(50)!` | `title: { type: "string", maxLength: 50, eval: { required: true } }` |
 | `tags: string[]` | `tags: { type: "array", items: "string" }` |
@@ -98,40 +98,40 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
 | `items: [OrderItem]` (relations) | `items: { type: "hasMany", target: "OrderItem" }` |
 | `status: enum` + `options: [A, B]` | `options: [{ value: "A", label: "A" }, { value: "B", label: "B" }]` |
 
-### 3.3 階段三：Validate & Emit IR（驗證與產出）
+### 3.3 Phase Three: Validate & Emit IR
 
-#### 編譯期驗證 (Compile-time Checks)
+#### Compile-time Checks
 
-在產出 IR 之前，解析器**必須**執行以下檢查，任何一項失敗即為編譯錯誤：
+Before outputting IR JSON, the parser **must** execute the aforementioned structural checks; failing any test equals a compilation crash:
 
-| 檢查項目 | 說明 |
+| Check Rule | Description |
 | :--- | :--- |
-| 表達式合法性 | 所有 `computed`、`eval`、`validations.rule`、`guard.validations.rule` 中的表達式必須符合 [06 表達式語言規範](./06_Expression_Language.md) |
-| 識別符可解析 | 表達式中引用的識別符必須為已宣告的 `fields` key 或內建函式 |
-| 保留字衝突 | `fields` / `relations` 的自訂 key 不可與該層級的保留字同名 (依 [05 保留字辭典](./05_Reserved_Words.md)) |
-| Lookup 引用有效 | `type: lookup` 的 `relation` 值必須存在於 `relations` 節點中 |
-| 狀態機完整性 | `workflow.statusField` 引用的欄位必須為 `type: enum`；`initial`、所有 `from[]`、所有 `to` 值必須存在於該欄位的 `options` 之中 |
-| Enum options 合法 | `options` 中的 `value` 值不可重複 |
+| Expression Validity | Expressions located inside `computed`, `eval`, `validations.rule`, `guard.validations.rule` must strictly abide by [06 Expression Language Specifications](./06_Expression_Language.md). |
+| Identifier Reachability | Identifiers referenced within calculations must point directly towards previously defined `fields` keys or intrinsic functions. |
+| Reserved Word Constraints | Customized keys among `fields` / `relations` must rarely collide with layer identical native reserved keys (conforming to [05 Reserved Words](./05_Reserved_Words.md)). |
+| Lookup Target Relevancy | The `relation` attribute inside `type: lookup` mappings must map back strictly towards a named item inside `relations` grouping context. |
+| State Machine Integrity | The target variable field named beneath `workflow.statusField` must be mapped into `type: enum`; values declared underneath `initial`, `from[]`, `to` bindings must natively match with existing declarations under the host field's `options` array. |
+| Enum Options Integrity | Nested `value` arrays existing inside an `options` mapping must remain distinct to avoid conflicts. |
 
-#### 中間表示 (IR) 格式
+#### Intermediate Representation (IR) Output Specification
 
-每個實體的最終產出為一份獨立的 **JSON 物件**。IR 的結構鏡像自合併後且去糖後的 YAML，外加解析器推算的元資料：
+The overarching generation for every entity equates towards producing an independent **JSON Object**. The IR object's internal infrastructure mirrors the desugared structures previously compiled under mapping logic alongside native parser interpolations.
 
 ```jsonc
 {
-  // 解析器推算
+  // Parser Inferences
   "module": "Procurement",
 
-  // 來自 .entity.yaml
+  // Sourced from .entity.yaml
   "name": "PurchaseOrder",
-  "label": "採購單",
+  "label": "Purchase Order",
   "fields": {
     "poNumber": {
       "type": "string",
       "maxLength": null,
       "sequence": {
         "pattern": "PO-{YYYY}{MM}-{SEQ:4}",
-        "resetCycle": "monthly"        // 解析器由 pattern 自動推斷
+        "resetCycle": "monthly"        // Parser automatically infers reset cycle from pattern
       },
       "eval": { "readonly": true, "required": false, "hidden": false }
     },
@@ -146,7 +146,7 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
     "netAmount": {
       "type": "decimal",
       "computed": "grossAmount - discountAmount",
-      "virtual": true                  // 解析器標記：不產生 DB 欄位
+      "virtual": true                  // Parser marks: Avoid generating actual Database Column
     },
     "supplierPhone": {
       "type": "lookup",
@@ -159,7 +159,7 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
     "supplier": {
       "type": "belongsTo",
       "target": "Supplier",
-      "foreignKey": "supplierId"       // 解析器依約定生成
+      "foreignKey": "supplierId"       // Generated dynamically via parser conventions
     },
     "items": {
       "type": "hasMany",
@@ -170,9 +170,9 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
     { "fields": ["status", "createdAt"], "name": "idx_status_createdAt", "unique": false }
   ],
 
-  // 來自 .flow.yaml
+  // Sourced from .flow.yaml
   "validations": [
-    { "rule": "totalAmount > 0", "message": "金額必須大於零" }
+    { "rule": "totalAmount > 0", "message": "Amount must be strictly greater than zero" }
   ],
   "workflow": {
     "statusField": "status",
@@ -180,7 +180,7 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
     "transitions": [
       {
         "action": "Submit",
-        "label": "送出審核",
+        "label": "Submit for Review",
         "from": ["Draft", "Rejected"],
         "to": "Pending",
         "guard": null
@@ -189,7 +189,7 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
   },
   "hooks": [],
 
-  // 來自 .views.yaml
+  // Sourced from .views.yaml
   "views": {
     "list": {
       "columns": ["poNumber", "supplier", "totalAmount", "status"],
@@ -203,9 +203,9 @@ BizYAML 的原始 YAML 檔案不直接被執行，而是經過一條三階段的
 }
 ```
 
-**關鍵設計決策**：
+**Design Principles of the IR**:
 
-- **每個實體一份 IR**：IR 不做跨實體的關聯解析。`target: "Supplier"` 只是一個字串參照，下游生成器自行決定如何解析引用。這確保每份 IR 是自包含的，可獨立處理。
-- **語法糖全部展開**：IR 中不存在任何簡寫形式。下游工具永遠不需要理解 BizYAML 的語法糖，只需讀取結構化 JSON。
-- **解析器推算的欄位明確標記**：`virtual`、`foreignKey`、`resetCycle` 等推算值在 IR 中一律顯式呈現，下游工具不需要重新推算。
-- **IR 格式即契約**：所有下游工具（程式碼生成器、前端引擎、Linter）皆以 IR JSON 為輸入，不直接讀取 YAML 原始碼。規範的 YAML 語法可以演化，只要 IR 結構不變，下游工具不受影響。
+- **One JSON object per entity**: Cross-entity references (e.g., `target: "Supplier"`) are kept as plain strings. Downstream tools resolve them independently — the IR does not embed foreign entity objects.
+- **No syntactic sugar in the IR**: All shorthand is fully expanded. Code generators consume plain JSON and never need to understand BizYAML shorthand.
+- **All inferred values are explicit**: Parser-derived properties such as `virtual`, `foreignKey`, and `resetCycle` are always present in the IR, so downstream tools do not have to re-derive them.
+- **The IR is the contract**: All downstream consumers (code generators, UI renderers, linters) read only the IR — never the raw YAML. Changing YAML syntax does not break downstream tools as long as the IR format remains stable.

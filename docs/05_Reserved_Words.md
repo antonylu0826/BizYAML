@@ -1,167 +1,167 @@
-# 05. 核心保留字辭典 (Reserved Words)
+# 05. Core Reserved Words Dictionary (Reserved Words)
 
-為了確保 DSL 結構單純、防堵編譯期的解析錯誤，BizYAML 收斂了極少數的「核心保留字」。這份文件是為解析器 (Parser) 開發者、以及撰寫 Linter/JSON Schema 所制定的黃金準則。
+To keep the DSL structure simple and prevent compilation parsing errors, BizYAML restricts a very small set of "core reserved words". This document serves as the golden rule for Parser developers and when writing Linter/JSON Schemas.
 
 > [!WARNING]
-> **命名衝突防範 (Collision Rules)**
-> 開發者在定義**實體名稱**、**自訂欄位名稱 (`fields` 底下)** 或 **自訂關聯名稱 (`relations` 底下)** 時，**絕對不可**與該層級的保留字完全同名。
+> **Naming Collision Rules (Collision Rules)**
+> When developers define **Entity Names**, **Custom Field Names (under `fields`)**, or **Custom Relation Names (under `relations`)**, they must **absolutely never** have the exact same name as the reserved words for that level.
 
 ---
 
-## 1. 第一層級全域保留字 (Root Keywords)
+## 1. Root Level Global Reserved Words (Root Keywords)
 
-僅允許出現在 YAML 文件的最上層的根節點（不論是否拆檔）。
+Only permitted to appear at the root node of the YAML file (regardless of whether the file is split).
 
-| 保留字 | 類型 | 必填 | 用途說明 | 範例 / 備註 |
+| Reserved Word | Type | Required | Usage Description | Example / Notes |
 | :--- | :--- | :---: | :--- | :--- |
-| `name` | String | ✅ | 宣告實體的全域唯一識別碼 | 必須為大駝峰 (如: `PurchaseOrder`) |
-| `label` | String | - | 實體的預設人類可讀名稱 | 如: "採購單" |
-| `description` | String | - | 實體的業務說明，給人與 AI Agent 閱讀；不進 UI 渲染，不被 i18n 提取 | 純文字，不支援 Markdown |
-| `fields` | Object | ✅ | 包含所有實體資料屬性的宣告進入點 | 關聯一律宣告於 `relations`，不在此處 |
-| `relations` | Object | - | 關聯與樹狀結構的獨立宣告進入點 | 解析器自動生成對應外鍵欄位 |
-| `indexes` | Array | - | 資料庫實體端之複合索引進入點 | - |
-| `validations` | Array | - | 跨欄位或實體層級的查核規則進入點 | 每次建立/更新時觸發 |
-| `workflow` | Object | - | 狀態機生命週期與審核流的定義進入點 | - |
-| `hooks` | Array | - | 外部非同步整合與事件監聽進入點 | - |
-| `views` | Object | - | 介面佈局與視圖排版的定義進入點 | - |
+| `name` | String | ✅ | Declares the globally unique identifier of the entity | Must be PascalCase (e.g., `PurchaseOrder`) |
+| `label` | String | - | The default human-readable name of the entity | e.g., "Purchase Order" |
+| `description` | String | - | Business description of the entity, for human and AI Agent reading; not rendered in UI, not extracted by i18n | Plain text, Markdown not supported |
+| `fields` | Object | ✅ | The entry point containing declarations for all entity data properties | Relations are strictly declared in `relations`, not here |
+| `relations` | Object | - | Independent declaration entry point for relations and tree structures | The parser automatically generates corresponding foreign key fields |
+| `indexes` | Array | - | Entry point for composite indexes on the database entity side | - |
+| `validations` | Array | - | Entry point for cross-field or entity-level checking rules | Triggered upon every create/update |
+| `workflow` | Object | - | Entry point defining state machine lifecycles and approval workflows | - |
+| `hooks` | Array | - | Entry point for external asynchronous integration and event listening | - |
+| `views` | Object | - | Entry point defining UI layouts and view arrangements | - |
 
 ---
 
-## 2. 第二層級區域保留字 (Scoped Feature Keywords)
+## 2. Second Level Scoped Reserved Words (Scoped Feature Keywords)
 
-這些保留字只在特定的區塊下才具備系統運算意義，離開了該作用域就不算保留字。
+These reserved words only possess systemic operational meaning under specific blocks; outside of that scope, they are not considered reserved.
 
-### 2.1 欄位屬性專用 (`fields` 子節點)
+### 2.1 Specific to Field Properties (Child nodes of `fields`)
 
-| 保留字 | 類型 | 用途說明 | 範例 |
+| Reserved Word | Type | Usage Description | Example |
 | :--- | :--- | :--- | :--- |
-| `type` | String | 決定對應的資料庫儲存型別 | `string`, `integer`, `decimal`, `boolean`, `date`, `datetime`, `json`, `enum`, `lookup` |
-| `description` | String | 欄位的業務說明，給人與 AI Agent 閱讀；適用所有型別，不進 i18n 提取 | 純文字，選填 |
-| `computed` | Expr | 定義不存入資料庫的純記憶體計算公式 | `computed: "grossAmount - discountAmount"` |
-| `sequence` | String | 流水單號字串板模，系統自動推算歸零維度 | `"PO-{YYYY}{MM}-{SEQ:4}"` |
-| `options` | Array | 專供 `enum` 型別使用的合法列舉值清單 | 簡寫：`[Draft, Pending]`；完整：`[{value: 1, label: 低}]` |
-| `default` | Any | 建立資料時的預設值設定 | `default: false` |
-| `unique` | Boolean | 宣告此欄位的值在整個資料表中必須唯一 | `unique: true`（等同於單欄位唯一索引語法糖） |
-| `eval` | Object | **動態條件容器**：裝載 `required`, `hidden`, `readonly` 等控制項，值接受布林字面值或表達式字串 | `eval: { readonly: true }` / `eval: { hidden: "status=='Draft'" }` |
+| `type` | String | Determines corresponding database storage type | `string`, `integer`, `decimal`, `boolean`, `date`, `datetime`, `json`, `enum`, `lookup` |
+| `description` | String | Business description of the field, for human and AI Agent reading; applies to all types, not extracted by i18n | Plain text, optional |
+| `computed` | Expr | Defines pure-memory calculation formulas not stored in DB | `computed: "grossAmount - discountAmount"` |
+| `sequence` | String | Sequence numbering string template, system auto-infers reset dimension | `"PO-{YYYY}{MM}-{SEQ:4}"` |
+| `options` | Array | Legal enumeration list specific to the `enum` type | Shorthand: `[Draft, Pending]`; Full: `[{value: 1, label: Low}]` |
+| `default` | Any | Default value setup upon data creation | `default: false` |
+| `unique` | Boolean | Declares that the field's value must be unique across the entire table | `unique: true` (Equivalent to single-field unique index syntactic sugar) |
+| `eval` | Object | **Dynamic Condition Container**: Holds `required`, `hidden`, `readonly` controls, accepts boolean literals or expression strings | `eval: { readonly: true }` / `eval: { hidden: "status=='Draft'" }` |
 
-### 2.2 `eval` 子節點專用
+### 2.2 Specific to `eval` Child Nodes
 
-| 保留字 | 接受值 | 用途說明 |
+| Reserved Word | Accepted Values | Usage Description |
 | :--- | :--- | :--- |
-| `required` | `boolean` \| `Expr` | 欄位是否為必填 |
-| `hidden` | `boolean` \| `Expr` | 欄位是否在 UI 上隱藏不渲染 |
-| `readonly` | `boolean` \| `Expr` | 欄位是否鎖定為唯讀 |
+| `required` | `boolean` \| `Expr` | Whether the field is mandatory |
+| `hidden` | `boolean` \| `Expr` | Whether the field is hidden and not rendered on UI |
+| `readonly` | `boolean` \| `Expr` | Whether the field is locked as read-only |
 
-### 2.3 關聯查表專用 (`type: lookup` 時的子節點)
+### 2.3 Specific to Relation Lookup (Child nodes when `type: lookup`)
 
-| 保留字 | 類型 | 用途說明 |
+| Reserved Word | Type | Usage Description |
 | :--- | :--- | :--- |
-| `relation` | String | 綁定要監聽的關聯，值對應 `relations` 節點下的 **key 名稱**（非資料庫欄位名） |
-| `field` | String | 表明要抓取對方實體身上的「哪一個屬性」過來顯示 |
+| `relation` | String | Binds the target relation being listened to, value matches the **key name** under the `relations` node (Not DB field name) |
+| `field` | String | Specifies exactly "which property" to grab and display from the target entity |
 
-### 2.4 工作流專用 (`workflow` 節點)
+### 2.4 Specific to Workflow (`workflow` node)
 
-| 保留字 | 類型 | 用途說明 | 備註 |
+| Reserved Word | Type | Usage Description | Notes |
 | :--- | :--- | :--- | :--- |
-| `statusField` | String | 指定由哪個 `fields` key 承載狀態值，必須為 `type: enum` | 編譯期驗證 |
-| `initial` | String | 狀態機的初始狀態 | 必須存在於 `statusField` 的 enum options 中 |
-| `terminal` | Array | 終態列表，進入後不可再發起任何 transition | 必須存在於 `statusField` 的 enum options 中 |
-| `transitions` | Array | 狀態轉換規則清單 | - |
+| `statusField` | String | Specifies which `fields` key carries the state value, must be `type: enum` | Checked at compile-time |
+| `initial` | String | The initial state of the state machine | Must exist inside the `statusField`'s enum options |
+| `terminal` | Array | List of terminal states, entering implies no further transitions can be initiated | Must exist inside the `statusField`'s enum options |
+| `transitions` | Array | List of state transition rules | - |
 
-### 2.5 工作流轉換專用 (`workflow.transitions` 下)
+### 2.5 Specific to Workflow Transitions (Under `workflow.transitions`)
 
-| 保留字 | 類型 | 用途說明 | 備註 |
+| Reserved Word | Type | Usage Description | Notes |
 | :--- | :--- | :--- | :--- |
-| `action` | String | 觸發按鈕或動作的名稱 | 如: `Submit`, `Reject` |
-| `label` | String | 動作的人類可讀名稱，由 i18n 提取 | 如: `送出審核` |
-| `description` | String | 動作的業務說明，給人與 AI Agent 閱讀；不進 i18n 提取 | 純文字，選填 |
-| `from` | Array | 允許發起此動作的前置狀態限制 | 如: `[Draft, Rejected]` |
-| `to` | String | 動作執行成功後的落點狀態 | 如: `Pending` |
-| `guard` | Object | **守衛條件容器**：執行動作前才查核的前置邏輯。與欄位層的 `eval` 語義不同，不可混用 | - |
+| `action` | String | Name of the trigger button or action | E.g.: `Submit`, `Reject` |
+| `label` | String | Human-readable action name, extracted by i18n | E.g.: `Submit for Review` |
+| `description` | String | Business description of the action, for human & AI Agent reading; not extracted by i18n | Plain text, optional |
+| `from` | Array | Pre-condition state constraints permitting the firing of this action | E.g.: `[Draft, Rejected]` |
+| `to` | String | Landing state after action completes successfully | E.g.: `Pending` |
+| `guard` | Object | **Guard Condition Container**: Pre-conditional logic checked right before execution. Distinctly different styling semantics from field level `eval`, do not intermix | - |
 
-### 2.6 `guard` 子節點專用
+### 2.6 Specific to `guard` Child Nodes
 
-| 保留字 | 類型 | 用途說明 |
+| Reserved Word | Type | Usage Description |
 | :--- | :--- | :--- |
-| `validations` | Array | 執行動作前的規則查核，結構與根層級 `validations` 相同；觸發時機僅限於該 transition 動作 |
-| `requireParams` | Array | 觸發動作時必須附帶填寫的欄位清單 |
+| `validations` | Array | Rule checking prior to action execution, structurally identical to root `validations`; trigger timing solely limited to this transition action |
+| `requireParams` | Array | Required list of parameter fields needing explicit filling alongside triggering the current action |
 
-### 2.7 掛鉤專用 (`hooks[]` 子節點)
+### 2.7 Specific to Hooks (`hooks[]` Child nodes)
 
-| 保留字 | 類型 | 必填 | 用途說明 |
+| Reserved Word | Type | Required | Usage Description |
 | :--- | :--- | :---: | :--- |
-| `event` | String | ✅ | 觸發事件名稱，格式為 `{時機}:{類型}:{動作}`，支援萬用字元 `*` 代替動作名稱 |
-| `type` | String | ✅ | 目前支援：`webhook` |
-| `url` | String | ✅ | 接收端的 URL |
-| `method` | String | - | HTTP 方法，預設為 `POST` |
-| `async` | Boolean | - | 是否非同步執行，預設為 `false` |
-| `headers` | Object | - | 自訂 HTTP Header 鍵值對 |
-| `payload` | Object | - | 請求 Body，值可使用 `${fieldName}` 插值語法 |
-| `retry` | Object | - | 失敗重試策略 |
+| `event` | String | ✅ | Event trigger designation formatted as `{Timing}:{Type}:{Action}`, supporting wildcard `*` replacing action names |
+| `type` | String | ✅ | Currently supports: `webhook` |
+| `url` | String | ✅ | Receiving endpoint URL |
+| `method` | String | - | HTTP method formatting, defaults specifically to `POST` |
+| `async` | Boolean | - | Specifies asynchronous execution, defaults to `false` |
+| `headers` | Object | - | Custom HTTP Header key-value pairs |
+| `payload` | Object | - | Request Body, value can use `${fieldName}` interpolation syntax |
+| `retry` | Object | - | Failure retry strategy |
 
-### 2.8 `retry` 子節點專用
+### 2.8 Specific to `retry` Child Nodes
 
-| 保留字 | 類型 | 用途說明 |
+| Reserved Word | Type | Usage Description |
 | :--- | :--- | :--- |
-| `attempts` | Integer | 最大重試次數 |
-| `backoff` | String | 重試間隔策略：`fixed`（固定間隔）或 `exponential`（指數退避） |
+| `attempts` | Integer | Maximum retry count |
+| `backoff` | String | Retry interval strategy: `fixed` (fixed interval) or `exponential` (exponential backoff) |
 
-### 2.9 視圖專用 (`views` 下)
+### 2.9 Specific to Views (Under `views`)
 
-| 保留字 | 類型 | 用途說明 |
+| Reserved Word | Type | Usage Description |
 | :--- | :--- | :--- |
-| `columns` | Array | 定義列表視圖要依序渲染哪些查表欄位 |
-| `filterBy` | Array | 提供使用者可在畫面上過濾的維度搜尋條件 |
-| `defaultSort` | String | 列表視圖的預設排序欄位。前綴 `-` 代表降序 (DESC)，無前綴代表升序 (ASC) |
-| `layout` | Array | 表單的排版架構，由各種佈局容器（`group`、`tabs`）組成 |
-| `actions` | Object | 宣告 workflow 動作按鈕的渲染位置與顯示範圍 |
+| `columns` | Array | Defines which fields to render in sequence in the list view |
+| `filterBy` | Array | Provides dimension search conditions that users can filter by on the screen |
+| `defaultSort` | String | Default sort field for list view. Prefix `-` implies descending (DESC), no prefix implies ascending (ASC) |
+| `layout` | Array | Form layout architecture, composed of various layout containers (`group`, `tabs`) |
+| `actions` | Object | Declares rendering positions and display scopes for workflow action buttons |
 
-### 2.10 `views.detail.actions` 子節點專用
+### 2.10 Specific to `views.detail.actions` Child Nodes
 
-| 保留字 | 類型 | 用途說明 |
+| Reserved Word | Type | Usage Description |
 | :--- | :--- | :--- |
-| `placement` | String | 按鈕渲染位置：`top`（預設）、`bottom`、`both` |
-| `include` | Array | 選填：限定顯示哪些 action 名稱，省略則顯示全部合法動作 |
+| `placement` | String | Button render position: `top` (default), `bottom`, `both` |
+| `include` | Array | Optional: Limit which action names are displayed, omitting this displays all legal actions |
 
 ---
 
-## 3. 系統保留符號 (Syntactic Sugar Symbols)
+## 3. System Reserved Syntactic Sugar Symbols (Syntactic Sugar Symbols)
 
-解析器在編譯期間，若在欄位定義的值中讀取到以下符號，將自動啟動內建的型別轉換與簡寫還原功能：
+During compilation, if the parser reads the following symbols inside field definition values, it automatically triggers built-in type conversion and shorthand unrolling capabilities:
 
-* **驚嘆號 `!`**：型別後綴。代表該欄位**為必填 (Required)**。
-  * `title: string!` 等同於在該欄位下配置 `eval: { required: true }`。
-  * 結合長度限制：`string(50)!`
+* **Exclamation Mark `!`**: Type suffix. Represents that the specific field **is required (Required)**.
+  * `title: string!` is identical to configuring `eval: { required: true }` under that field.
+  * Combined with length limitations: `string(50)!`
 
-* **陣列框 `[]`**：型別或關聯後綴。
-  * 代表單純原生陣列：`tags: string[]`。
-  * 代表一對多實體關聯 (hasMany)：`items: [PurchaseOrderItem]`（宣告於 `relations` 下）。
+* **Array Brackets `[]`**: Type or relation suffix.
+  * Represents simple native arrays: `tags: string[]`.
+  * Represents One-to-Many entity relationships (hasMany): `items: [PurchaseOrderItem]` (Declared under `relations`).
 
-* **減號前綴 `-`**：排序方向符號，**僅在 `views.list.defaultSort` 的值中有效**。
-  * `-createdAt` 代表依 `createdAt` **降序 (DESC)** 排列。
-  * `createdAt`（無前綴）代表**升序 (ASC)**，為預設方向。
+* **Minus Prefix `-`**: Sort direction symbol, **only valid in values of `views.list.defaultSort`**.
+  * `-createdAt` means sort by `createdAt` **DESC**.
+  * `createdAt` (no prefix) means **ASC**, which is the default direction.
 
 ---
 
-## 4. 模板語法對照 (Template Syntax Reference)
+## 4. Template Syntax Reference
 
-BizYAML 中存在兩套功能相異的模板語法，適用範圍嚴格區分，不可混用：
+BizYAML possesses two sets of template syntaxes with disparate functions, whose scopes are strictly distinguished and cannot be intermixed:
 
-| 語法 | 名稱 | 適用範圍 | 求值時機 | 範例 |
+| Syntax | Name | Scope | Evaluation Timing | Example |
 | :--- | :--- | :--- | :--- | :--- |
-| `{PLACEHOLDER}` | Sequence Pattern 佔位符 | 僅限 `fields[].sequence` | 每次新建紀錄時，由後端序號引擎求值 | `"PO-{YYYY}{MM}-{SEQ:4}"` |
-| `${fieldName}` | Payload 插值符 | 僅限 `hooks[].payload` 的值 | 事件觸發時，由運行期引擎動態注入當前紀錄欄位值 | `"${id}"`, `"${totalAmount}"` |
+| `{PLACEHOLDER}` | Sequence Pattern Placeholder | Strictly exclusively specific to `fields[].sequence` | Evaluated by backend sequence engine when creating every new record | `"PO-{YYYY}{MM}-{SEQ:4}"` |
+| `${fieldName}` | Payload Interpolation Variable | Exclusively limited to values inside `hooks[].payload` | Evaluated dynamically injecting current record field values at runtime during event trigger | `"${id}"`, `"${totalAmount}"` |
 
 ---
 
-## 5. 表達式語言保留運算子
+## 5. Expression Language Reserved Operators
 
-以下運算子在 BizYAML 表達式中具有特殊語義，不可作為識別符使用。完整規範請參閱 [06. 表達式語言規範](./06_Expression_Language.md)。
+The following operators carry special semantic meaning in BizYAML expressions and cannot be used as identifiers. For the full specification, please refer to [06. Expression Language](./06_Expression_Language.md).
 
-| 運算子 | 類別 |
+| Operator | Category |
 | :--- | :--- |
-| `==` `!=` `>` `>=` `<` `<=` | 比較運算子 |
-| `in` `not in` | 集合運算子 |
-| `&&` `\|\|` `!` | 邏輯運算子 |
-| `+` `-` `*` `/` | 算術運算子 |
-| `true` `false` `null` | 字面值關鍵字 |
+| `==` `!=` `>` `>=` `<` `<=` | Comparison Operators |
+| `in` `not in` | Set Operators |
+| `&&` `\|\|` `!` | Logical Operators |
+| `+` `-` `*` `/` | Arithmetic Operators |
+| `true` `false` `null` | Literal Value Keywords |

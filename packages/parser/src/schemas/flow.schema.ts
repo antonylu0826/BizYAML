@@ -2,7 +2,7 @@ import { z } from 'zod'
 import { ExprSchema } from './common.js'
 
 // ---------------------------------------------------------------------------
-// validations（根層級 & guard 內共用）
+// validations (shared in root level & guard)
 // ---------------------------------------------------------------------------
 
 export const ValidationRuleSchema = z.object({
@@ -17,14 +17,14 @@ export const ValidationsSchema = z.array(ValidationRuleSchema)
 // workflow
 // ---------------------------------------------------------------------------
 
-/** guard 容器（workflow.transitions 專用） */
+/** guard container (specific to workflow.transitions) */
 export const GuardSchema = z.object({
   validations:   ValidationsSchema.optional(),
   requireParams: z.array(z.string().min(1)).optional(),
 })
 export type Guard = z.infer<typeof GuardSchema>
 
-/** 單一狀態轉換規則 */
+/** Single state transition rule */
 export const TransitionSchema = z.object({
   action:      z.string().min(1),
   label:       z.string().optional(),
@@ -35,7 +35,7 @@ export const TransitionSchema = z.object({
 })
 export type Transition = z.infer<typeof TransitionSchema>
 
-/** workflow 根節點 */
+/** workflow root node */
 export const WorkflowSchema = z.object({
   statusField: z.string().min(1),
   initial:     z.string().min(1),
@@ -49,7 +49,7 @@ export type Workflow = z.infer<typeof WorkflowSchema>
 // ---------------------------------------------------------------------------
 
 /**
- * 支援的事件格式：
+ * Supported event formats:
  *   after:transition:Submit
  *   before:transition:*
  *   after:create
@@ -57,7 +57,7 @@ export type Workflow = z.infer<typeof WorkflowSchema>
  */
 const HookEventSchema = z.string().regex(
   /^(before|after):(transition:[A-Za-z*]+|create|update)$/,
-  '無效的事件格式。範例：after:transition:Submit、before:transition:*、after:create',
+  'Invalid event format. Example: after:transition:Submit, before:transition:*, after:create',
 )
 
 const RetrySchema = z.object({
@@ -80,7 +80,7 @@ export type Hook = z.infer<typeof HookSchema>
 export const HooksSchema = z.array(HookSchema)
 
 // ---------------------------------------------------------------------------
-// .flow.yaml 根 schema
+// .flow.yaml root schema
 // ---------------------------------------------------------------------------
 
 export const FlowFileSchema = z.object({
