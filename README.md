@@ -61,7 +61,8 @@
 - [x] **發布 `@bizyaml/schema`**：由 Parser 的保留字定義自動衍生的 JSON Schema，掛載至 IDE 後提供欄位自動補齊與結構防呆提示。
 
 ### 🔌 Phase 3: 適配器開放生態 (Adapters Ecosystem)
-*產出標準 IR 後，由外部專案或開源社群自行開發適合自己的轉換器：*
+*產出標準 IR 後，各項目皆為**選做**，依技術棧自行決定要實作哪些。可由外部專案或開源社群自行開發。*
 - [ ] **ORM 適配器 (DB Generators)**：例如 `bizyaml-prisma-adapter` 讀取 IR 後自動吐出 `schema.prisma`。
+- [ ] **動態表單引擎 (Dynamic Form Engine)**：以 TypeScript + React 為例，讀取 IR 的 `fields`、`views.detail.layout`、`eval` 表達式與 `workflow.transitions`，動態渲染完整的 CRUD 表單，無需手寫任何 HTML。
 - [ ] **動態表單渲染 (UI Renderers)**：例如 `bizyaml-vue-renderer` 直接讀取 IR，利用資料綁定動態生出 CRUD 元件。
 - [ ] **多語系提取器 (I18n Extractor)**：自動遍歷 IR 抽出所有 `label` 與 `message`，生成預設翻譯檔。
