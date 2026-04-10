@@ -1,6 +1,6 @@
 # BizYAML
 
-> **Latest Version**: v1.0.1
+> **Latest Version**: v1.0.4
 > **Design Philosophy**: Convention over Configuration, dedicated to eliminating redundant rework, creating the perfect intermediate language between domain experts and developers.
 
 Due to the vast scope of business domain logic covered by BizYAML, we have divided this specification into modular, independent sub-documents. Please refer to the index directory below for deeper details:
